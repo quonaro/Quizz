@@ -1,0 +1,122 @@
+name: Build Application
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            executable_name: quiz-linux
+          - os: windows-latest
+            platform: windows
+            executable_name: quiz-windows.exe
+          - os: macos-latest
+            platform: macos
+            executable_name: quiz-macos
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install system dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            python3-dev \
+            build-essential \
+            libgl1-mesa-glx \
+            libxcb-xinerama0 \
+            libxcb-cursor0 \
+            patchelf
+
+      - name: Cache uv dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock', 'pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      - name: Build application
+        shell: bash
+        run: |
+          chmod +x build.sh
+          ./build.sh --platform ${{ matrix.platform }}
+
+      - name: Find executable
+        id: find-exe
+        shell: bash
+        run: |
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            if [ -f "build/quiz.exe" ]; then
+              echo "executable=build/quiz.exe" >> $GITHUB_OUTPUT
+              echo "name=${{ matrix.executable_name }}" >> $GITHUB_OUTPUT
+            elif [ -f "quiz.exe" ]; then
+              echo "executable=quiz.exe" >> $GITHUB_OUTPUT
+              echo "name=${{ matrix.executable_name }}" >> $GITHUB_OUTPUT
+            fi
+          else
+            if [ -f "build/quiz" ]; then
+              echo "executable=build/quiz" >> $GITHUB_OUTPUT
+              echo "name=${{ matrix.executable_name }}" >> $GITHUB_OUTPUT
+            elif [ -f "quiz" ]; then
+              echo "executable=quiz" >> $GITHUB_OUTPUT
+              echo "name=${{ matrix.executable_name }}" >> $GITHUB_OUTPUT
+            fi
+
+      - name: Verify executable
+        if: steps.find-exe.outputs.executable != ''
+        shell: bash
+        run: |
+          EXE="${{ steps.find-exe.outputs.executable }}"
+          if [ -f "$EXE" ]; then
+            SIZE=$(stat -f%z "$EXE" 2>/dev/null || stat -c%s "$EXE" 2>/dev/null || echo "unknown")
+            echo "✅ Executable found: $EXE"
+            echo "📦 Size: $SIZE bytes"
+          else
+            echo "❌ Executable not found: $EXE"
+            exit 1
+          fi
+
+      - name: Upload artifact
+        if: steps.find-exe.outputs.executable != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.find-exe.outputs.name }}
+          path: ${{ steps.find-exe.outputs.executable }}
+          retention-days: 30
+
+      - name: Build summary
+        if: always()
+        run: |
+          echo "## Build Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Status | Executable |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|------------|" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.find-exe.outputs.executable }}" != "" ]; then
+            echo "| ${{ matrix.os }} | ✅ Success | ${{ steps.find-exe.outputs.name }} |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| ${{ matrix.os }} | ❌ Failed | Not found |" >> $GITHUB_STEP_SUMMARY
+          fi

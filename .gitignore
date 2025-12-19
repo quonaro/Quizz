@@ -1,0 +1,4 @@
+build/
+nuitka-crash-report.xml
+.venv/
+__pycache__
