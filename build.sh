@@ -114,8 +114,15 @@ echo "Starting Nuitka build..."
 NUITKA_CMD="uv run nuitka \
     --standalone \
     --onefile \
-    --enable-plugin=pyqt6 \
-    --include-data-dir=schema=schema \
+    --enable-plugin=pyqt6"
+
+# Include schema directory if it exists
+if [ -d "schema" ]; then
+    NUITKA_CMD="$NUITKA_CMD --include-data-dir=schema=schema"
+fi
+
+# Continue building the command
+NUITKA_CMD="$NUITKA_CMD \
     --include-package=src \
     --output-dir=$BUILD_DIR \
     --output-filename=quiz \

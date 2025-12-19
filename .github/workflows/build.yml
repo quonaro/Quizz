@@ -46,7 +46,7 @@ jobs:
           sudo apt-get install -y \
             python3-dev \
             build-essential \
-            libgl1-mesa-glx \
+            libgl1 \
             libxcb-xinerama0 \
             libxcb-cursor0 \
             patchelf
@@ -69,7 +69,7 @@ jobs:
         id: find-exe
         shell: bash
         run: |
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
             if [ -f "build/quiz.exe" ]; then
               echo "executable=build/quiz.exe" >> $GITHUB_OUTPUT
               echo "name=${{ matrix.executable_name }}" >> $GITHUB_OUTPUT
@@ -85,6 +85,7 @@ jobs:
               echo "executable=quiz" >> $GITHUB_OUTPUT
               echo "name=${{ matrix.executable_name }}" >> $GITHUB_OUTPUT
             fi
+          fi
 
       - name: Verify executable
         if: steps.find-exe.outputs.executable != ''
@@ -110,6 +111,7 @@ jobs:
 
       - name: Build summary
         if: always()
+        shell: bash
         run: |
           echo "## Build Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

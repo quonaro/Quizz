@@ -481,14 +481,24 @@ def build_exe(quiz_path: Path, platform: str = None):
         "--standalone",
         "--onefile",
         "--enable-plugin=pyqt6",
-        "--include-data-dir=schema=schema",
-        "--include-package=src",
-        "--output-dir=" + str(build_dir),
-        "--output-filename=quiz",
-        "--assume-yes-for-downloads",
-        "--show-progress",
-        "--show-memory",
     ]
+
+    # Include schema directory if it exists
+    schema_dir = project_root / "schema"
+    if schema_dir.exists() and schema_dir.is_dir():
+        cmd.append("--include-data-dir=schema=schema")
+
+    # Continue building the command
+    cmd.extend(
+        [
+            "--include-package=src",
+            "--output-dir=" + str(build_dir),
+            "--output-filename=quiz",
+            "--assume-yes-for-downloads",
+            "--show-progress",
+            "--show-memory",
+        ]
+    )
 
     # Add platform-specific options
     if platform:
