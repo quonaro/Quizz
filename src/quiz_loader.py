@@ -27,8 +27,8 @@ def _find_schema_path() -> Optional[Path]:
     # Try multiple locations
     possible_paths = []
     
-    # In onefile mode, Nuitka extracts files to a temp directory
-    # Files from --include-data-dir are available relative to __file__ in onefile mode
+    # In onefile mode, PyInstaller and Nuitka extract files to a temp directory
+    # Files from --add-data/--include-data-dir are available relative to __file__ in onefile mode
     if getattr(sys, "frozen", False):
         # Running as compiled executable
         if hasattr(sys, "_MEIPASS"):

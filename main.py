@@ -131,7 +131,7 @@ def load_embedded_quiz():
     Only loads embedded quiz when running from a compiled executable (exe).
     """
     # Only load embedded quiz if running from compiled executable
-    # Nuitka sets sys.frozen = True when running from exe
+    # PyInstaller and Nuitka set sys.frozen = True when running from exe
     if not getattr(sys, "frozen", False):
         return None, None
 
@@ -423,124 +423,74 @@ def build_exe(quiz_path: Path, platform: str = None):
     print(f"Embedding quiz from: {quiz_path}")
     embed_quiz_in_code(quiz_path, embedded_quiz_path)
 
-    print("\nBuilding executable with Nuitka...")
+    print("\nBuilding executable with PyInstaller...")
 
-    # Check if Nuitka is installed
+    # Check if PyInstaller is installed
     try:
-        import nuitka  # noqa: F401
+        import PyInstaller  # noqa: F401
     except ImportError:
-        print("Error: Nuitka is not installed.")
-        print("Install it with: pip install nuitka")
+        print("Error: PyInstaller is not installed.")
+        print("Install it with: pip install pyinstaller")
         sys.exit(1)
 
-    # Check for cross-compilation requirements
-    import shutil
+    # Note: PyInstaller doesn't support cross-compilation
     import platform as platform_module
 
     if platform == "windows" and platform_module.system() == "Linux":
-        print("\nCross-compiling for Windows from Linux...")
-        # Check for MinGW-w64
-        if not shutil.which("x86_64-w64-mingw32-gcc") and not shutil.which(
-            "i686-w64-mingw32-gcc"
-        ):
-            print(
-                "\nWarning: MinGW-w64 not found. It's required for cross-compilation to Windows."
-            )
-            print("Install it with one of the following commands:")
-            print("  Ubuntu/Debian: sudo apt-get install mingw-w64")
-            print("  Fedora/RHEL:   sudo dnf install mingw64-gcc")
-            print("  Arch:          sudo pacman -S mingw-w64-gcc")
-            print(
-                "\nNuitka will attempt to download MinGW automatically, but manual installation is recommended."
-            )
-            response = input("\nContinue anyway? (y/N): ")
-            if response.lower() != "y":
-                print("Build cancelled.")
-                sys.exit(1)
-        else:
-            print("MinGW-w64 found. Cross-compilation should work.")
+        print("\nWarning: PyInstaller doesn't support cross-compilation from Linux to Windows.")
+        print("You need to build on Windows or use a Windows CI runner.")
+        response = input("\nContinue anyway? (y/N): ")
+        if response.lower() != "y":
+            print("Build cancelled.")
+            sys.exit(1)
 
-    # Check if patchelf is installed (required for standalone mode on Linux)
-    if platform != "windows" and platform_module.system() == "Linux":
-        if not shutil.which("patchelf"):
-            print(
-                "\nWarning: 'patchelf' is not installed, which is required for standalone mode on Linux."
-            )
-            print("Install it with one of the following commands:")
-            print("  Ubuntu/Debian: sudo apt install patchelf")
-            print("  Fedora/RHEL:   sudo dnf install patchelf")
-            print("  Arch:          sudo pacman -S patchelf")
-            print(
-                "\nAlternatively, you can build without standalone mode (not recommended for distribution)."
-            )
-            response = input("\nContinue anyway? (y/N): ")
-            if response.lower() != "y":
-                print("Build cancelled.")
-                sys.exit(1)
-
-    # Determine Nuitka command
-    nuitka_cmd = (
-        "nuitka3"
-        if Path("/usr/bin/nuitka3").exists() or Path("/usr/local/bin/nuitka3").exists()
-        else "nuitka"
-    )
-
-    # Build directory
+    # Build directories
     build_dir = project_root / "build"
-    build_dir.mkdir(exist_ok=True)
+    dist_dir = project_root / "dist"
+    work_dir = build_dir / ".pyinstaller-work"
+    cache_dir = build_dir / ".pyinstaller-cache"
     
-    # Cache directory for Nuitka (set via environment variable, not flag)
-    cache_dir = build_dir / ".nuitka-cache"
+    build_dir.mkdir(exist_ok=True)
+    dist_dir.mkdir(exist_ok=True)
+    work_dir.mkdir(exist_ok=True)
     cache_dir.mkdir(exist_ok=True)
     
-    # Determine number of jobs for parallel compilation
+    # Set PyInstaller cache directory via environment variable
     import os
-    jobs = os.environ.get("NUITKA_JOBS")
-    if not jobs:
-        # Auto-detect CPU cores
-        import multiprocessing
-        jobs = str(multiprocessing.cpu_count())
-    
-    # Set Nuitka cache directory via environment variable
-    # Nuitka doesn't support --cache-dir flag, uses NUITKA_CACHE_DIR env var
-    os.environ["NUITKA_CACHE_DIR"] = str(cache_dir)
+    os.environ["PYINSTALLER_CACHE_DIR"] = str(cache_dir)
     
     # Build command
     cmd = [
-        nuitka_cmd,
-        "--standalone",
+        "pyinstaller",
         "--onefile",
-        "--enable-plugin=pyqt6",
-        "--jobs=" + jobs,
+        "--name=quiz",
+        "--distpath=" + str(dist_dir),
+        "--workpath=" + str(work_dir),
+        "--clean",
+        "--hidden-import=src",
+        "--hidden-import=PyQt6",
+        "--hidden-import=jsonschema",
+        "--hidden-import=requests",
     ]
 
     # Include schema directory if it exists
     schema_dir = project_root / "schema"
     if schema_dir.exists() and schema_dir.is_dir():
-        cmd.append("--include-data-dir=schema=schema")
-
-    # Continue building the command
-    cmd.extend(
-        [
-            "--include-package=src",
-            "--output-dir=" + str(build_dir),
-            "--output-filename=quiz",
-            "--assume-yes-for-downloads",
-            "--show-progress",
-            "--show-memory",
-        ]
-    )
+        # PyInstaller uses --add-data with format: source:destination
+        if platform_module.system() == "Windows":
+            cmd.append(f"--add-data={schema_dir};schema")
+        else:
+            cmd.append(f"--add-data={schema_dir}:schema")
 
     # Add platform-specific options
     if platform:
         if platform == "windows":
-            # Enable console mode to show errors and debug output
-            cmd.append("--windows-console-mode=force")
-            # Add MinGW for cross-compilation from Linux
-            if platform_module.system() == "Linux":
-                cmd.append("--mingw64")
+            # PyInstaller on Windows uses console by default
+            # Add --noconsole if you want windowed mode
+            pass
         elif platform == "macos":
-            cmd.append("--macos-create-app-bundle")
+            # PyInstaller on macOS creates app bundle by default with --onefile
+            pass
         elif platform == "linux":
             # Linux is default, no extra options needed
             pass
@@ -552,17 +502,31 @@ def build_exe(quiz_path: Path, platform: str = None):
 
     if result.returncode == 0:
         print("\nBuild completed successfully!")
-        # Find executable
+        # Move executable to build directory for consistency
         exe_paths = [
-            build_dir / "quiz.exe",
-            build_dir / "quiz",
-            project_root / "quiz.exe",
-            project_root / "quiz",
+            dist_dir / "quiz.exe",
+            dist_dir / "quiz",
         ]
         for exe_path in exe_paths:
             if exe_path.exists():
-                print(f"Executable location: {exe_path}")
+                # Move to build directory
+                target_path = build_dir / exe_path.name
+                import shutil
+                shutil.move(str(exe_path), str(target_path))
+                print(f"Executable location: {target_path}")
                 break
+        else:
+            # Fallback: check other locations
+            fallback_paths = [
+                build_dir / "quiz.exe",
+                build_dir / "quiz",
+                project_root / "quiz.exe",
+                project_root / "quiz",
+            ]
+            for exe_path in fallback_paths:
+                if exe_path.exists():
+                    print(f"Executable location: {exe_path}")
+                    break
     else:
         print("\nBuild failed!")
         sys.exit(1)

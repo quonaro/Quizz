@@ -5,7 +5,7 @@ description = "Quiz Application"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "nuitka>=2.8.9",
+    "pyinstaller>=6.0.0",
     "PyQt6>=6.6.0",
     "jsonschema>=4.20.0",
     "requests>=2.31.0",

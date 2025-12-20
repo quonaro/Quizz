@@ -1,5 +1,5 @@
 #!/bin/bash
-# Build script for Quiz Application using Nuitka
+# Build script for Quiz Application using PyInstaller
 # Usage:
 #   ./build.sh                                    # Build without embedded quiz
 #   ./build.sh /path/to/quiz.json                 # Build with embedded quiz from JSON file
@@ -9,8 +9,6 @@
 #   ./build.sh --platform macos                  # Build for macOS
 #   ./build.sh /path/to/quiz.json --platform windows  # Build with quiz for Windows
 #   ./build.sh --no-clean                        # Incremental build (keep cache)
-#   ./build.sh --jobs 8                          # Use 8 parallel jobs
-#   ./build.sh --incremental --jobs 4            # Incremental build with 4 jobs
 
 set -e  # Exit on error
 
@@ -18,7 +16,6 @@ QUIZ_PATH=""
 PLATFORM=""
 BUILD_MODE=""
 CLEAN_BUILD=true
-JOBS=""
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -30,10 +27,6 @@ while [[ $# -gt 0 ]]; do
         --no-clean|--incremental)
             CLEAN_BUILD=false
             shift
-            ;;
-        --jobs|-j)
-            JOBS="$2"
-            shift 2
             ;;
         *)
             if [ -z "$QUIZ_PATH" ]; then
@@ -66,29 +59,12 @@ if [ -n "$PLATFORM" ]; then
     esac
 fi
 
-# Check for cross-compilation requirements
-if [ -n "$PLATFORM" ] && [ "$PLATFORM" = "windows" ]; then
-    # Check if we're on Linux and need MinGW for cross-compilation
-    if [ "$(uname -s)" = "Linux" ]; then
-        echo "Cross-compiling for Windows from Linux..."
-        if ! command -v x86_64-w64-mingw32-gcc &> /dev/null && ! command -v i686-w64-mingw32-gcc &> /dev/null; then
-            echo ""
-            echo "Warning: MinGW-w64 not found. It's required for cross-compilation to Windows."
-            echo "Install it with one of the following commands:"
-            echo "  Ubuntu/Debian: sudo apt-get install mingw-w64"
-            echo "  Fedora/RHEL:   sudo dnf install mingw64-gcc"
-            echo "  Arch:          sudo pacman -S mingw-w64-gcc"
-            echo ""
-            echo "Nuitka will attempt to download MinGW automatically, but manual installation is recommended."
-            read -p "Continue anyway? (y/N): " -n 1 -r
-            echo
-            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-                exit 1
-            fi
-        else
-            echo "MinGW-w64 found. Cross-compilation should work."
-        fi
-    fi
+# Note: PyInstaller doesn't support cross-compilation
+# You need to build on the target platform or use Docker/CI
+if [ -n "$PLATFORM" ] && [ "$PLATFORM" = "windows" ] && [ "$(uname -s)" = "Linux" ]; then
+    echo "Warning: PyInstaller doesn't support cross-compilation from Linux to Windows."
+    echo "You need to build on Windows or use a Windows CI runner."
+    echo "Continuing anyway, but the build may fail..."
 fi
 
 # If quiz path provided, use Python's --build mode
@@ -102,8 +78,8 @@ if [ -n "$QUIZ_PATH" ]; then
     exit $?
 fi
 
-# Otherwise, use traditional Nuitka build
-echo "Building Quiz Application with Nuitka..."
+# Otherwise, use traditional PyInstaller build
+echo "Building Quiz Application with PyInstaller..."
 
 # Sync dependencies with uv
 echo "Syncing dependencies with uv..."
@@ -112,85 +88,60 @@ uv sync --quiet
 # Build directory
 BUILD_DIR="build"
 DIST_DIR="dist"
-CACHE_DIR="${BUILD_DIR}/.nuitka-cache"
+WORK_DIR="${BUILD_DIR}/.pyinstaller-work"
+CACHE_DIR="${BUILD_DIR}/.pyinstaller-cache"
 
 # Clean previous builds (only if not incremental)
 if [ "$CLEAN_BUILD" = true ]; then
     echo "Cleaning previous builds..."
-    rm -rf "$BUILD_DIR" "$DIST_DIR" "*.build" "*.dist" "*.onefile-build"
+    rm -rf "$BUILD_DIR" "$DIST_DIR" "*.spec"
 else
     echo "Incremental build: keeping cache..."
     # Only clean final executables, keep cache
-    rm -rf "$BUILD_DIR/quiz" "$BUILD_DIR/quiz.exe" "$DIST_DIR" "*.build" "*.dist" "*.onefile-build"
+    rm -rf "$BUILD_DIR/quiz" "$BUILD_DIR/quiz.exe" "$DIST_DIR/quiz" "$DIST_DIR/quiz.exe"
 fi
 
-# Create build directory and cache directory
+# Create build directories
 mkdir -p "$BUILD_DIR"
+mkdir -p "$DIST_DIR"
+mkdir -p "$WORK_DIR"
 mkdir -p "$CACHE_DIR"
 
-# Determine number of jobs (parallel compilation)
-if [ -z "$JOBS" ]; then
-    # Check environment variable first (useful for CI/CD)
-    if [ -n "$NUITKA_JOBS" ]; then
-        JOBS="$NUITKA_JOBS"
-        echo "Using NUITKA_JOBS environment variable: $JOBS"
-    else
-        # Auto-detect CPU cores
-        if command -v nproc &> /dev/null; then
-            JOBS=$(nproc)
-        elif [ -f /proc/cpuinfo ]; then
-            JOBS=$(grep -c processor /proc/cpuinfo)
-        elif command -v sysctl &> /dev/null; then
-            JOBS=$(sysctl -n hw.ncpu)
-        else
-            JOBS=4  # Default fallback
-        fi
-        echo "Auto-detected $JOBS CPU cores for parallel compilation"
-    fi
-else
-    echo "Using $JOBS jobs for parallel compilation (from --jobs flag)"
-fi
+# Set PyInstaller cache directory via environment variable
+export PYINSTALLER_CACHE_DIR="$CACHE_DIR"
 
-# Build with Nuitka using uv
-echo "Starting Nuitka build..."
+# Build with PyInstaller using uv
+echo "Starting PyInstaller build..."
 
-# Base Nuitka command
-NUITKA_CMD="uv run nuitka \
-    --standalone \
+# Base PyInstaller command
+PYINSTALLER_CMD="uv run pyinstaller \
     --onefile \
-    --enable-plugin=pyqt6"
+    --name=quiz \
+    --distpath=$DIST_DIR \
+    --workpath=$WORK_DIR \
+    --clean"
 
 # Include schema directory if it exists
 if [ -d "schema" ]; then
-    NUITKA_CMD="$NUITKA_CMD --include-data-dir=schema=schema"
+    PYINSTALLER_CMD="$PYINSTALLER_CMD --add-data=schema:schema"
 fi
 
 # Continue building the command
-NUITKA_CMD="$NUITKA_CMD \
-    --include-package=src \
-    --output-dir=$BUILD_DIR \
-    --output-filename=quiz \
-    --assume-yes-for-downloads \
-    --show-progress \
-    --show-memory \
-    --jobs=$JOBS"
-
-# Set Nuitka cache directory via environment variable (Nuitka doesn't support --cache-dir flag)
-export NUITKA_CACHE_DIR="$CACHE_DIR"
+PYINSTALLER_CMD="$PYINSTALLER_CMD \
+    --hidden-import=src \
+    --hidden-import=PyQt6 \
+    --hidden-import=jsonschema \
+    --hidden-import=requests"
 
 # Add platform-specific options
 if [ -n "$PLATFORM" ]; then
     case "$PLATFORM" in
         windows)
-            # Enable console mode to show errors and debug output
-            NUITKA_CMD="$NUITKA_CMD --windows-console-mode=force"
-            # Add MinGW for cross-compilation from Linux
-            if [ "$(uname -s)" = "Linux" ]; then
-                NUITKA_CMD="$NUITKA_CMD --mingw64"
-            fi
+            # PyInstaller on Windows uses console by default
+            # Add --noconsole if you want windowed mode
             ;;
         macos)
-            NUITKA_CMD="$NUITKA_CMD --macos-create-app-bundle"
+            # PyInstaller on macOS creates app bundle by default with --onefile
             ;;
         linux)
             # Linux is default, no extra options needed
@@ -199,19 +150,30 @@ if [ -n "$PLATFORM" ]; then
 fi
 
 # Add main.py and execute
-NUITKA_CMD="$NUITKA_CMD main.py"
+PYINSTALLER_CMD="$PYINSTALLER_CMD main.py"
 
-eval $NUITKA_CMD
+eval $PYINSTALLER_CMD
+
+# Move executable to build directory for consistency
+if [ -f "$DIST_DIR/quiz.exe" ]; then
+    mv "$DIST_DIR/quiz.exe" "$BUILD_DIR/quiz.exe"
+elif [ -f "$DIST_DIR/quiz" ]; then
+    mv "$DIST_DIR/quiz" "$BUILD_DIR/quiz"
+fi
 
 echo ""
 echo "Build completed successfully!"
 
-# Find the executable (Nuitka creates different paths for onefile builds)
+# Find the executable (PyInstaller creates files in dist/ or build/)
 EXECUTABLE=""
 if [ -f "$BUILD_DIR/quiz.exe" ]; then
     EXECUTABLE="$BUILD_DIR/quiz.exe"
 elif [ -f "$BUILD_DIR/quiz" ]; then
     EXECUTABLE="$BUILD_DIR/quiz"
+elif [ -f "$DIST_DIR/quiz.exe" ]; then
+    EXECUTABLE="$DIST_DIR/quiz.exe"
+elif [ -f "$DIST_DIR/quiz" ]; then
+    EXECUTABLE="$DIST_DIR/quiz"
 elif [ -f "quiz.exe" ]; then
     EXECUTABLE="quiz.exe"
 elif [ -f "quiz" ]; then
