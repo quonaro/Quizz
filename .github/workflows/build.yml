@@ -56,37 +56,24 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-uv-
 
-      - name: Cache Nuitka build cache
+      - name: Cache PyInstaller build cache
         uses: actions/cache@v4
         with:
-          path: build/.nuitka-cache
-          key: ${{ runner.os }}-nuitka-${{ matrix.platform }}-${{ hashFiles('main.py', 'src/**/*.py', 'pyproject.toml') }}
+          path: build/.pyinstaller-cache
+          key: ${{ runner.os }}-pyinstaller-${{ matrix.platform }}-${{ hashFiles('main.py', 'src/**/*.py', 'pyproject.toml') }}
           restore-keys: |
-            ${{ runner.os }}-nuitka-${{ matrix.platform }}-
-            ${{ runner.os }}-nuitka-
-
-      - name: Cache Nuitka downloaded files (MinGW, etc.)
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/Nuitka
-            ~/.Nuitka
-          key: ${{ runner.os }}-nuitka-downloads-${{ matrix.platform }}
-          restore-keys: |
-            ${{ runner.os }}-nuitka-downloads-
+            ${{ runner.os }}-pyinstaller-${{ matrix.platform }}-
+            ${{ runner.os }}-pyinstaller-
 
       - name: Build application
         shell: bash
         env:
-          # Use all available CPU cores for parallel compilation
-          NUITKA_JOBS: ${{ github.event_name == 'pull_request' && '2' || '4' }}
-          # Set Nuitka cache directory (Nuitka uses NUITKA_CACHE_DIR env var, not --cache-dir flag)
-          NUITKA_CACHE_DIR: ${{ github.workspace }}/build/.nuitka-cache
+          # Set PyInstaller cache directory
+          PYINSTALLER_CACHE_DIR: ${{ github.workspace }}/build/.pyinstaller-cache
         run: |
           chmod +x build.sh
           # Use incremental build to leverage cache
-          # GitHub Actions runners have 2 cores, but we can use more jobs for I/O bound tasks
-          ./build.sh --platform ${{ matrix.platform }} --no-clean --jobs ${NUITKA_JOBS}
+          ./build.sh --platform ${{ matrix.platform }} --no-clean
 
       - name: Find executable
         id: find-exe
