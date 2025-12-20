@@ -21,9 +21,6 @@ jobs:
           - os: windows-latest
             platform: windows
             executable_name: quiz-windows.exe
-          - os: macos-latest
-            platform: macos
-            executable_name: quiz-macos
     
     steps:
       - name: Checkout code
