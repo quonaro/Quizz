@@ -585,7 +585,18 @@ Examples:
                 pass
             sys.exit(1)
 
-    # Try to load embedded quiz (if running from exe and no path was provided)
+    # If no quiz_path was provided, show file selection dialog first
+    file_selected = False
+    if quiz_data is None and not args.quiz_path:
+        print("No quiz path provided. Opening file selection dialog...")
+        selected_path = select_quiz_file()
+        if selected_path:
+            file_selected = True
+            quiz_data, quiz_file_path = load_quiz_from_path(selected_path)
+            if quiz_data is None:
+                sys.exit(1)
+
+    # Try to load embedded quiz as fallback (if running from exe and no file was selected)
     if quiz_data is None:
         quiz_data, quiz_file_path = load_embedded_quiz()
         if quiz_data:
@@ -601,18 +612,7 @@ Examples:
 
     # Try to load from quiz folder if no quiz loaded yet
     if quiz_data is None:
-        # If no quiz_path was provided, show file selection dialog
-        if not args.quiz_path:
-            print("No quiz path provided. Opening file selection dialog...")
-            selected_path = select_quiz_file()
-            if selected_path:
-                quiz_data, quiz_file_path = load_quiz_from_path(selected_path)
-                if quiz_data is None:
-                    sys.exit(1)
-            else:
-                print("No file selected. Exiting...")
-                sys.exit(0)
-        else:
+        if args.quiz_path:
             # Try to load from default quiz folder
             try:
                 quiz_data, quiz_file_path = QuizBuilder.load_from_quiz_folder()
@@ -626,6 +626,13 @@ Examples:
             except Exception as e:
                 print(f"Error loading quiz: {e}")
                 print("Falling back to sample quiz...")
+        elif file_selected:
+            # File was selected but failed to load
+            sys.exit(1)
+        else:
+            # If no file was selected and no embedded quiz, exit
+            print("No file selected and no embedded quiz found. Exiting...")
+            sys.exit(0)
 
     # Fallback to sample quiz if loading from folder failed
     if quiz_data is None:
