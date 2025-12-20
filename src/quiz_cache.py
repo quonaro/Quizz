@@ -1,6 +1,6 @@
 """
 Quiz cache module for saving and loading user answers.
-Cache is saved as a hidden file next to the executable.
+Cache is saved in user's application data directory.
 """
 
 import json
@@ -12,28 +12,47 @@ from typing import Dict, Any, Optional
 
 def get_cache_path() -> Path:
     """
-    Get path to cache file next to the executable.
-    For Nuitka onefile builds, uses executable directory.
-    For regular Python scripts, uses script directory.
-    """
-    if getattr(sys, 'frozen', False):
-        # Running as compiled executable (Nuitka, PyInstaller, etc.)
-        if hasattr(sys, '_MEIPASS'):
-            # PyInstaller temporary directory
-            base_path = Path(sys.executable).parent
-        else:
-            # Nuitka onefile - executable is in sys.argv[0]
-            base_path = Path(sys.argv[0]).parent
-    else:
-        # Running as Python script
-        base_path = Path(sys.argv[0]).parent
+    Get path to cache file in user's application data directory.
+    Uses platform-specific user data directories to avoid permission issues.
     
-    # If base_path is empty or current directory, use current working directory
-    if not base_path or str(base_path) == '.':
-        base_path = Path.cwd()
+    Windows: %LOCALAPPDATA%/quiz/.quiz_cache.json
+    Linux: ~/.cache/quiz/.quiz_cache.json
+    macOS: ~/Library/Application Support/quiz/.quiz_cache.json
+    """
+    if sys.platform == 'win32':
+        # Windows: Use LOCALAPPDATA (user-specific, writable)
+        appdata = os.environ.get('LOCALAPPDATA')
+        if appdata:
+            cache_dir = Path(appdata) / "quiz"
+        else:
+            # Fallback to user home
+            cache_dir = Path.home() / ".quiz"
+    elif sys.platform == 'darwin':
+        # macOS: Use Application Support
+        cache_dir = Path.home() / "Library" / "Application Support" / "quiz"
+    else:
+        # Linux and other Unix-like systems: Use XDG cache directory
+        xdg_cache = os.environ.get('XDG_CACHE_HOME')
+        if xdg_cache:
+            cache_dir = Path(xdg_cache) / "quiz"
+        else:
+            cache_dir = Path.home() / ".cache" / "quiz"
+    
+    # Create cache directory if it doesn't exist
+    try:
+        cache_dir.mkdir(parents=True, exist_ok=True)
+    except (OSError, PermissionError):
+        # If we can't create in user directory, fallback to temp directory
+        import tempfile
+        cache_dir = Path(tempfile.gettempdir()) / "quiz_cache"
+        try:
+            cache_dir.mkdir(parents=True, exist_ok=True)
+        except (OSError, PermissionError):
+            # Last resort: use current directory (might fail, but we'll handle it in save_cache)
+            cache_dir = Path.cwd()
     
     # Create hidden cache file (.quiz_cache.json)
-    cache_file = base_path / ".quiz_cache.json"
+    cache_file = cache_dir / ".quiz_cache.json"
     return cache_file
 
 

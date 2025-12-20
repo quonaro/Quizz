@@ -27,9 +27,22 @@ def select_quiz_file():
     """
     try:
         from PyQt6.QtWidgets import QApplication, QFileDialog
+        from PyQt6.QtGui import QPalette
+        from PyQt6.QtCore import Qt
 
         # Create minimal QApplication for file dialog
         app = QApplication(sys.argv)
+        app.setStyle("Fusion")
+        
+        # Force light theme palette
+        palette = QPalette()
+        palette.setColor(QPalette.ColorRole.Window, Qt.GlobalColor.white)
+        palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.black)
+        palette.setColor(QPalette.ColorRole.Base, Qt.GlobalColor.white)
+        palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.black)
+        palette.setColor(QPalette.ColorRole.Button, Qt.GlobalColor.lightGray)
+        palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.black)
+        app.setPalette(palette)
 
         # Show file dialog
         file_path, _ = QFileDialog.getOpenFileName(

@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
     QLabel, QPushButton, QMessageBox, QScrollArea, QFrame
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QPalette
 
 from ..quiz_loader import QuizLoader, QuizValidationError
 from ..quiz_builder import create_sample_quiz
@@ -697,6 +697,28 @@ def main(quiz_data: dict = None, quiz_file_path: str = None):
     
     app = QApplication(sys.argv)
     app.setStyle("Fusion")  # Modern, cross-platform style
+    
+    # Force light theme palette
+    palette = QPalette()
+    # Window colors
+    palette.setColor(QPalette.ColorRole.Window, Qt.GlobalColor.white)
+    palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.black)
+    # Base colors (for input widgets)
+    palette.setColor(QPalette.ColorRole.Base, Qt.GlobalColor.white)
+    palette.setColor(QPalette.ColorRole.AlternateBase, Qt.GlobalColor.lightGray)
+    # Text colors
+    palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.black)
+    palette.setColor(QPalette.ColorRole.BrightText, Qt.GlobalColor.white)
+    # Button colors
+    palette.setColor(QPalette.ColorRole.Button, Qt.GlobalColor.lightGray)
+    palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.black)
+    # Highlight colors
+    palette.setColor(QPalette.ColorRole.Highlight, Qt.GlobalColor.blue)
+    palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.white)
+    # Link colors
+    palette.setColor(QPalette.ColorRole.Link, Qt.GlobalColor.blue)
+    palette.setColor(QPalette.ColorRole.LinkVisited, Qt.GlobalColor.darkBlue)
+    app.setPalette(palette)
     
     # Load quiz if not provided
     if quiz_data is None:
