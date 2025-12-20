@@ -30,6 +30,7 @@ jobs:
 
       - name: Calculate version from commits
         id: version
+        shell: bash
         run: |
           # Get base version from pyproject.toml
           BASE_VERSION=$(grep -m 1 "^version" pyproject.toml | sed 's/version = "\(.*\)"/\1/' | tr -d ' ')
