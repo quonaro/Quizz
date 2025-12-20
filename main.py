@@ -60,8 +60,16 @@ def load_quiz_from_path(quiz_path: Path):
     Returns:
         Tuple of (quiz_data, quiz_file_path) or (None, None) on error.
     """
+    # Resolve relative paths relative to current working directory
+    if not quiz_path.is_absolute():
+        quiz_path = Path.cwd() / quiz_path
+    
+    # Normalize the path (resolve .. and .)
+    quiz_path = quiz_path.resolve()
+    
     if not quiz_path.exists():
-        print(f"Error: Quiz path does not exist: {quiz_path}")
+        print(f"Error: Quiz path does not exist: {quiz_path}", file=sys.stderr)
+        print(f"Current working directory: {Path.cwd()}", file=sys.stderr)
         return None, None
 
     try:
@@ -101,13 +109,19 @@ def load_quiz_from_path(quiz_path: Path):
             print(f"Loaded quiz from folder: {quiz_path}")
             return quiz_data, quiz_file_path
     except FileNotFoundError as e:
-        print(f"Error: {e}")
+        print(f"Error: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
         return None, None
     except QuizValidationError as e:
-        print(f"Quiz validation failed: {e}")
+        print(f"Quiz validation failed: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
         return None, None
     except Exception as e:
-        print(f"Error loading quiz: {e}")
+        print(f"Error loading quiz: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
         return None, None
 
 
@@ -503,7 +517,8 @@ def build_exe(quiz_path: Path, platform: str = None):
     # Add platform-specific options
     if platform:
         if platform == "windows":
-            cmd.append("--windows-console-mode=disable")
+            # Enable console mode to show errors and debug output
+            cmd.append("--windows-console-mode=force")
             # Add MinGW for cross-compilation from Linux
             if platform_module.system() == "Linux":
                 cmd.append("--mingw64")
@@ -537,6 +552,21 @@ def build_exe(quiz_path: Path, platform: str = None):
 
 
 if __name__ == "__main__":
+    # Enable console output for error messages (especially important for Windows exe)
+    import os
+    if getattr(sys, "frozen", False) and os.name == "nt":
+        # Running as compiled exe on Windows - ensure console is available
+        try:
+            import ctypes
+            kernel32 = ctypes.windll.kernel32
+            # Allocate console if not already available
+            kernel32.AllocConsole()
+            # Redirect stdout and stderr to console
+            sys.stdout = open("CONOUT$", "w", encoding="utf-8")
+            sys.stderr = open("CONOUT$", "w", encoding="utf-8")
+        except Exception:
+            pass  # Console already available or allocation failed
+    
     parser = argparse.ArgumentParser(
         description="Quiz Application",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -552,6 +582,11 @@ Examples:
     )
 
     args = parser.parse_args()
+    
+    # Debug output
+    if args.quiz_path:
+        print(f"Loading quiz from: {args.quiz_path}")
+        print(f"Current working directory: {Path.cwd()}")
 
     # Normal run mode
     quiz_data = None
@@ -575,6 +610,11 @@ Examples:
         quiz_path = Path(args.quiz_path)
         quiz_data, quiz_file_path = load_quiz_from_path(quiz_path)
         if quiz_data is None:
+            print("\nFailed to load quiz. Press any key to exit...", file=sys.stderr)
+            try:
+                input()
+            except (EOFError, KeyboardInterrupt):
+                pass
             sys.exit(1)
 
     # Try to load from quiz folder if no quiz loaded yet

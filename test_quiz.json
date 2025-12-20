@@ -1,0 +1,62 @@
+{
+  "title": "Тестовый квиз",
+  "description": "Тестовый квиз для проверки работы приложения со всеми типами вопросов",
+  "author": "Test Author",
+  "version": "1.0.0",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single_choice",
+      "question": "Какой химический символ у воды?",
+      "options": ["H2O", "CO2", "O2", "NaCl"],
+      "correct_answer": 0,
+      "points": 1,
+      "explanation": "Вода состоит из двух атомов водорода и одного атома кислорода, отсюда H2O."
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "question": "Какие из следующих являются языками программирования? (Выберите все подходящие)",
+      "options": ["Python", "HTML", "JavaScript", "CSS"],
+      "correct_answers": [0, 2],
+      "partial_credit": true,
+      "points": 2,
+      "explanation": "Python и JavaScript — языки программирования. HTML и CSS — языки разметки и стилей соответственно."
+    },
+    {
+      "id": "q3",
+      "type": "text_input",
+      "question": "Какая столица Франции?",
+      "correct_answers": ["Париж", "Paris", "PARIS"],
+      "case_sensitive": false,
+      "trim_whitespace": true,
+      "points": 1,
+      "explanation": "Париж — столица и крупнейший город Франции."
+    },
+    {
+      "id": "q4",
+      "type": "matching",
+      "question": "Сопоставьте страны с их столицами:",
+      "left_items": ["Франция", "Германия", "Италия", "Испания"],
+      "right_items": ["Мадрид", "Берлин", "Париж", "Рим"],
+      "matches": [
+        {"left": 0, "right": 2},
+        {"left": 1, "right": 1},
+        {"left": 2, "right": 3},
+        {"left": 3, "right": 0}
+      ],
+      "points": 4,
+      "explanation": "Франция-Париж, Германия-Берлин, Италия-Рим, Испания-Мадрид"
+    },
+    {
+      "id": "q5",
+      "type": "ordering",
+      "question": "Расположите планеты от ближайшей к Солнцу до самой дальней:",
+      "items": ["Юпитер", "Меркурий", "Земля", "Марс", "Венера"],
+      "correct_order": [1, 4, 2, 3, 0],
+      "points": 5,
+      "explanation": "Правильный порядок: Меркурий, Венера, Земля, Марс, Юпитер"
+    }
+  ]
+}
+

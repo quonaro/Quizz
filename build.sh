@@ -134,7 +134,8 @@ NUITKA_CMD="$NUITKA_CMD \
 if [ -n "$PLATFORM" ]; then
     case "$PLATFORM" in
         windows)
-            NUITKA_CMD="$NUITKA_CMD --windows-console-mode=disable"
+            # Enable console mode to show errors and debug output
+            NUITKA_CMD="$NUITKA_CMD --windows-console-mode=force"
             # Add MinGW for cross-compilation from Linux
             if [ "$(uname -s)" = "Linux" ]; then
                 NUITKA_CMD="$NUITKA_CMD --mingw64"
