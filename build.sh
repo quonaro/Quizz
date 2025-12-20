@@ -173,8 +173,10 @@ NUITKA_CMD="$NUITKA_CMD \
     --assume-yes-for-downloads \
     --show-progress \
     --show-memory \
-    --jobs=$JOBS \
-    --cache-dir=$CACHE_DIR"
+    --jobs=$JOBS"
+
+# Set Nuitka cache directory via environment variable (Nuitka doesn't support --cache-dir flag)
+export NUITKA_CACHE_DIR="$CACHE_DIR"
 
 # Add platform-specific options
 if [ -n "$PLATFORM" ]; then

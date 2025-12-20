@@ -489,7 +489,7 @@ def build_exe(quiz_path: Path, platform: str = None):
     build_dir = project_root / "build"
     build_dir.mkdir(exist_ok=True)
     
-    # Cache directory for Nuitka
+    # Cache directory for Nuitka (set via environment variable, not flag)
     cache_dir = build_dir / ".nuitka-cache"
     cache_dir.mkdir(exist_ok=True)
     
@@ -501,6 +501,10 @@ def build_exe(quiz_path: Path, platform: str = None):
         import multiprocessing
         jobs = str(multiprocessing.cpu_count())
     
+    # Set Nuitka cache directory via environment variable
+    # Nuitka doesn't support --cache-dir flag, uses NUITKA_CACHE_DIR env var
+    os.environ["NUITKA_CACHE_DIR"] = str(cache_dir)
+    
     # Build command
     cmd = [
         nuitka_cmd,
@@ -508,7 +512,6 @@ def build_exe(quiz_path: Path, platform: str = None):
         "--onefile",
         "--enable-plugin=pyqt6",
         "--jobs=" + jobs,
-        "--cache-dir=" + str(cache_dir),
     ]
 
     # Include schema directory if it exists

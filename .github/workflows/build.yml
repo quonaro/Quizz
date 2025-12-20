@@ -80,6 +80,8 @@ jobs:
         env:
           # Use all available CPU cores for parallel compilation
           NUITKA_JOBS: ${{ github.event_name == 'pull_request' && '2' || '4' }}
+          # Set Nuitka cache directory (Nuitka uses NUITKA_CACHE_DIR env var, not --cache-dir flag)
+          NUITKA_CACHE_DIR: ${{ github.workspace }}/build/.nuitka-cache
         run: |
           chmod +x build.sh
           # Use incremental build to leverage cache
