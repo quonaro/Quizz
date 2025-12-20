@@ -488,13 +488,27 @@ def build_exe(quiz_path: Path, platform: str = None):
     # Build directory
     build_dir = project_root / "build"
     build_dir.mkdir(exist_ok=True)
-
+    
+    # Cache directory for Nuitka
+    cache_dir = build_dir / ".nuitka-cache"
+    cache_dir.mkdir(exist_ok=True)
+    
+    # Determine number of jobs for parallel compilation
+    import os
+    jobs = os.environ.get("NUITKA_JOBS")
+    if not jobs:
+        # Auto-detect CPU cores
+        import multiprocessing
+        jobs = str(multiprocessing.cpu_count())
+    
     # Build command
     cmd = [
         nuitka_cmd,
         "--standalone",
         "--onefile",
         "--enable-plugin=pyqt6",
+        "--jobs=" + jobs,
+        "--cache-dir=" + str(cache_dir),
     ]
 
     # Include schema directory if it exists

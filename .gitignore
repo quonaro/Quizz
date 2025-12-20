@@ -1,4 +1,8 @@
 build/
+build/.nuitka-cache/
 nuitka-crash-report.xml
 .venv/
 __pycache__
+*.build
+*.dist
+*.onefile-build

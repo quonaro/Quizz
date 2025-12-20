@@ -8,18 +8,31 @@
 #   ./build.sh --platform windows                # Build for Windows
 #   ./build.sh --platform macos                  # Build for macOS
 #   ./build.sh /path/to/quiz.json --platform windows  # Build with quiz for Windows
+#   ./build.sh --no-clean                        # Incremental build (keep cache)
+#   ./build.sh --jobs 8                          # Use 8 parallel jobs
+#   ./build.sh --incremental --jobs 4            # Incremental build with 4 jobs
 
 set -e  # Exit on error
 
 QUIZ_PATH=""
 PLATFORM=""
 BUILD_MODE=""
+CLEAN_BUILD=true
+JOBS=""
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
         --platform)
             PLATFORM="$2"
+            shift 2
+            ;;
+        --no-clean|--incremental)
+            CLEAN_BUILD=false
+            shift
+            ;;
+        --jobs|-j)
+            JOBS="$2"
             shift 2
             ;;
         *)
@@ -99,13 +112,44 @@ uv sync --quiet
 # Build directory
 BUILD_DIR="build"
 DIST_DIR="dist"
+CACHE_DIR="${BUILD_DIR}/.nuitka-cache"
 
-# Clean previous builds
-echo "Cleaning previous builds..."
-rm -rf "$BUILD_DIR" "$DIST_DIR" "*.build" "*.dist" "*.onefile-build"
+# Clean previous builds (only if not incremental)
+if [ "$CLEAN_BUILD" = true ]; then
+    echo "Cleaning previous builds..."
+    rm -rf "$BUILD_DIR" "$DIST_DIR" "*.build" "*.dist" "*.onefile-build"
+else
+    echo "Incremental build: keeping cache..."
+    # Only clean final executables, keep cache
+    rm -rf "$BUILD_DIR/quiz" "$BUILD_DIR/quiz.exe" "$DIST_DIR" "*.build" "*.dist" "*.onefile-build"
+fi
 
-# Create build directory
+# Create build directory and cache directory
 mkdir -p "$BUILD_DIR"
+mkdir -p "$CACHE_DIR"
+
+# Determine number of jobs (parallel compilation)
+if [ -z "$JOBS" ]; then
+    # Check environment variable first (useful for CI/CD)
+    if [ -n "$NUITKA_JOBS" ]; then
+        JOBS="$NUITKA_JOBS"
+        echo "Using NUITKA_JOBS environment variable: $JOBS"
+    else
+        # Auto-detect CPU cores
+        if command -v nproc &> /dev/null; then
+            JOBS=$(nproc)
+        elif [ -f /proc/cpuinfo ]; then
+            JOBS=$(grep -c processor /proc/cpuinfo)
+        elif command -v sysctl &> /dev/null; then
+            JOBS=$(sysctl -n hw.ncpu)
+        else
+            JOBS=4  # Default fallback
+        fi
+        echo "Auto-detected $JOBS CPU cores for parallel compilation"
+    fi
+else
+    echo "Using $JOBS jobs for parallel compilation (from --jobs flag)"
+fi
 
 # Build with Nuitka using uv
 echo "Starting Nuitka build..."
@@ -128,7 +172,9 @@ NUITKA_CMD="$NUITKA_CMD \
     --output-filename=quiz \
     --assume-yes-for-downloads \
     --show-progress \
-    --show-memory"
+    --show-memory \
+    --jobs=$JOBS \
+    --cache-dir=$CACHE_DIR"
 
 # Add platform-specific options
 if [ -n "$PLATFORM" ]; then

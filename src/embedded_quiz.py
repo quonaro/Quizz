@@ -172,3 +172,4 @@ def resolve_embedded_images(quiz_data):
                 question["images"] = resolved_images
     
     return quiz_data
+
