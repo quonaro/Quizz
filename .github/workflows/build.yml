@@ -132,3 +132,82 @@ jobs:
           else
             echo "| ${{ matrix.os }} | ❌ Failed | Not found |" >> $GITHUB_STEP_SUMMARY
           fi
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+
+      - name: List downloaded artifacts
+        run: |
+          echo "Downloaded artifacts:"
+          find release-artifacts -type f || echo "No artifacts found"
+          ls -lh release-artifacts/ || true
+
+      - name: Extract version and create release info
+        id: release-info
+        run: |
+          # Extract version from pyproject.toml
+          VERSION=$(grep -m 1 "^version" pyproject.toml | sed 's/version = "\(.*\)"/\1/' | tr -d ' ')
+          if [ -z "$VERSION" ]; then
+            VERSION="0.1.0"
+          fi
+          
+          # Get short SHA
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          
+          # Create release tag
+          RELEASE_TAG="v${VERSION}-${SHORT_SHA}"
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$RELEASE_TAG" >> $GITHUB_OUTPUT
+          echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
+          
+          echo "Version: $VERSION"
+          echo "Release tag: $RELEASE_TAG"
+          echo "Commit SHA: ${{ github.sha }}"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.release-info.outputs.tag }}
+          name: Release ${{ steps.release-info.outputs.version }} (${{ steps.release-info.outputs.short_sha }})
+          body: |
+            ## Release ${{ steps.release-info.outputs.version }}
+            
+            **Commit:** ${{ steps.release-info.outputs.short_sha }}
+            **Branch:** ${{ github.ref_name }}
+            
+            ### Downloads
+            - **Windows**: `quiz-windows.exe`
+            - **Linux**: `quiz-linux`
+            
+            ### Installation
+            1. Download the executable for your platform
+            2. Make it executable (Linux): `chmod +x quiz-linux`
+            3. Run the application
+            
+            ### Usage
+            ```bash
+            # Run with default quiz
+            ./quiz
+            
+            # Run with specific quiz file
+            ./quiz /path/to/quiz.json
+            ```
+          files: |
+            release-artifacts/**/*
+          draft: false
+          prerelease: false

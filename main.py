@@ -573,21 +573,8 @@ Examples:
     quiz_data = None
     quiz_file_path = None
 
-    # Try to load embedded quiz first (if running from exe)
-    quiz_data, quiz_file_path = load_embedded_quiz()
-    if quiz_data:
-        print("Loaded embedded quiz from executable")
-        # Resolve embedded images
-        try:
-            from src.embedded_quiz import resolve_embedded_images  # noqa: E402
-
-            quiz_data = resolve_embedded_images(quiz_data)
-        except ImportError:
-            # embedded_quiz module not found, skip image resolution
-            pass
-
-    # If quiz_path provided, load from that
-    if quiz_data is None and args.quiz_path:
+    # If quiz_path provided, load from that (highest priority)
+    if args.quiz_path:
         quiz_path = Path(args.quiz_path)
         quiz_data, quiz_file_path = load_quiz_from_path(quiz_path)
         if quiz_data is None:
@@ -597,6 +584,20 @@ Examples:
             except (EOFError, KeyboardInterrupt):
                 pass
             sys.exit(1)
+
+    # Try to load embedded quiz (if running from exe and no path was provided)
+    if quiz_data is None:
+        quiz_data, quiz_file_path = load_embedded_quiz()
+        if quiz_data:
+            print("Loaded embedded quiz from executable")
+            # Resolve embedded images
+            try:
+                from src.embedded_quiz import resolve_embedded_images  # noqa: E402
+
+                quiz_data = resolve_embedded_images(quiz_data)
+            except ImportError:
+                # embedded_quiz module not found, skip image resolution
+                pass
 
     # Try to load from quiz folder if no quiz loaded yet
     if quiz_data is None:
