@@ -1,0 +1,63 @@
+name: Deploy to Preview
+
+on:
+  push:
+    branches:
+      - gh-pages
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build project
+        run: npm run build
+      
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Deploy to preview branch
+        run: |
+          # Check if preview branch exists, create if not
+          if ! git ls-remote --heads origin preview | grep -q preview; then
+            git checkout --orphan preview
+            git rm -rf . --ignore-unmatch || true
+          else
+            git fetch origin preview
+            git checkout preview
+            git rm -rf . --ignore-unmatch || true
+          fi
+          
+          # Copy built files
+          cp -r dist/* .
+          
+          # Commit and push
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Deploy preview from gh-pages [skip ci]"
+            git push origin preview --force
+          fi
+

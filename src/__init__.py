@@ -1,5 +1,0 @@
-"""Quiz application package."""
-
-
-
-
