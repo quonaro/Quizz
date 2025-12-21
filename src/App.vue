@@ -152,7 +152,7 @@
                   </template>
                   <template v-else>
                     <div style="text-align: center; margin: 20px 0;">
-                      <img src="/images/quiz-completion.jpg" alt="Поздравление" style="max-width: 400px; width: 100%; height: auto; border: 3px solid #27ae60; border-radius: 12px; margin: 0 auto 20px; display: block;">
+                      <img :src="`${baseUrl}images/quiz-completion.jpg`" alt="Поздравление" style="max-width: 400px; width: 100%; height: auto; border: 3px solid #27ae60; border-radius: 12px; margin: 0 auto 20px; display: block;">
                       <div style="font-size: 1.2rem; font-weight: bold; color: #27ae60;">ПОЗДРАВЛЯЮ! ТЫ ПРОШЁЛ ВЕСЬ КВИЗ!</div>
                       <div style="margin-top: 15px; color: #2c3e50;">Ты настоящий знаток истории! 🏆</div>
                     </div>
@@ -242,7 +242,7 @@
                 </template>
                 <template v-else>
                   <div style="text-align: center; margin: 20px 0;">
-                    <img src="/images/quiz-completion.jpg" alt="Поздравление" style="max-width: 400px; width: 100%; height: auto; border: 3px solid #3182ce; border-radius: 12px; margin: 0 auto 20px; display: block;">
+                    <img :src="`${baseUrl}images/quiz-completion.jpg`" alt="Поздравление" style="max-width: 400px; width: 100%; height: auto; border: 3px solid #3182ce; border-radius: 12px; margin: 0 auto 20px; display: block;">
                     <div style="font-size: 1.2rem; font-weight: bold; color: #3182ce;">ПОЗДРАВЛЯЮ! ТЫ ПРОШЁЛ ВЕСЬ КВИЗ!</div>
                     <div style="margin-top: 15px; color: #2d3748;">Ты настоящий умник! 🏆</div>
                   </div>
@@ -277,6 +277,11 @@
 <script>
 export default {
   name: 'App',
+  computed: {
+    baseUrl() {
+      return import.meta.env.BASE_URL
+    }
+  },
   data() {
     return {
       activeCard: null, // null means no card is active, 'console' | 'tkinter' | 'web' when one is active
@@ -357,8 +362,8 @@ export default {
         }
       },
       catImages: {
-        success: '/images/cat-success.jpg',
-        error: '/images/cat-error.jpg'
+        success: `${import.meta.env.BASE_URL}images/cat-success.jpg`,
+        error: `${import.meta.env.BASE_URL}images/cat-error.jpg`
       },
       codeSnippets: {
         console: `print("КВИЗ ПО ГЕОГРАФИИ!!!")
