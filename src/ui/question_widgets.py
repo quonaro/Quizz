@@ -9,8 +9,8 @@ from PyQt6.QtWidgets import (
     QCheckBox, QLineEdit, QPushButton, QScrollArea, QGroupBox,
     QListWidget, QListWidgetItem
 )
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QPixmap, QColor
+from PyQt6.QtCore import Qt, pyqtSignal, QMimeData, QPoint, QRect, QTimer
+from PyQt6.QtGui import QPixmap, QColor, QDrag, QPainter, QPen
 import requests
 from urllib.parse import urlparse
 
@@ -257,6 +257,162 @@ class TextInputWidget(BaseQuestionWidget):
         return self.text_input.text()
 
 
+class MatchingContainerWidget(QWidget):
+    """Container widget that draws lines between matched items in two lists."""
+    
+    def __init__(self, left_list, right_list, matches, match_colors, parent=None):
+        super().__init__(parent)
+        self.left_list = left_list
+        self.right_list = right_list
+        self.matches = matches  # Reference to matches dict
+        self.match_colors = match_colors  # Reference to match_colors dict
+        
+        # Get MATCH_COLORS from parent if available
+        if parent:
+            matching_widget = parent
+            while matching_widget:
+                if hasattr(matching_widget, 'MATCH_COLORS'):
+                    self.MATCH_COLORS = matching_widget.MATCH_COLORS
+                    break
+                matching_widget = matching_widget.parent()
+            else:
+                self.MATCH_COLORS = [
+                    QColor(173, 216, 230), QColor(144, 238, 144), 
+                    QColor(255, 182, 193), QColor(255, 218, 185)
+                ]
+        else:
+            self.MATCH_COLORS = [
+                QColor(173, 216, 230), QColor(144, 238, 144), 
+                QColor(255, 182, 193), QColor(255, 218, 185)
+            ]
+        
+        # Set background transparent so lines are visible
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground, True)
+        self.setStyleSheet("background: transparent;")
+        
+        # Install event filter to resize when parent resizes
+        if parent:
+            parent.installEventFilter(self)
+            # Make sure lines widget is on top
+            self.raise_()
+    
+    def eventFilter(self, obj, event):
+        """Handle resize events to update widget position."""
+        if obj == self.parent() and event.type() == event.Type.Resize:
+            self.setGeometry(0, 0, obj.width(), obj.height())
+        return super().eventFilter(obj, event)
+    
+    def showEvent(self, event):
+        """Update geometry when shown."""
+        super().showEvent(event)
+        if self.parent():
+            self.setGeometry(0, 0, self.parent().width(), self.parent().height())
+    
+    def paintEvent(self, event):
+        """Draw lines connecting matched items."""
+        if not self.matches:
+            return
+        
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
+        # Get positions of both lists relative to parent
+        parent = self.parent()
+        if not parent:
+            return
+        
+        # Ensure widget covers entire parent area
+        if self.geometry() != parent.rect():
+            self.setGeometry(parent.rect())
+        
+        for left_idx, right_idx in self.matches.items():
+            try:
+                left_idx = int(left_idx)
+                right_idx = int(right_idx)
+            except (ValueError, TypeError):
+                continue
+            
+            # Get left item position
+            left_item = None
+            for i in range(self.left_list.count()):
+                item = self.left_list.item(i)
+                item_index = item.data(Qt.ItemDataRole.UserRole)
+                try:
+                    if int(item_index) == left_idx:
+                        left_item = item
+                        break
+                except (ValueError, TypeError):
+                    continue
+            
+            # Get right item position
+            right_item = None
+            for i in range(self.right_list.count()):
+                item = self.right_list.item(i)
+                item_index = item.data(Qt.ItemDataRole.UserRole)
+                try:
+                    if int(item_index) == right_idx:
+                        right_item = item
+                        break
+                except (ValueError, TypeError):
+                    continue
+            
+            if not left_item or not right_item:
+                continue
+            
+            # Calculate item positions relative to their list widgets
+            left_item_rect = self.left_list.visualItemRect(left_item)
+            right_item_rect = self.right_list.visualItemRect(right_item)
+            
+            # Calculate center Y positions of items within their lists
+            left_item_center_y = left_item_rect.y() + left_item_rect.height() // 2
+            right_item_center_y = right_item_rect.y() + right_item_rect.height() // 2
+            
+            # Get list widget positions in parent coordinates
+            left_list_pos_in_parent = self.left_list.mapTo(parent, QPoint(0, 0))
+            right_list_pos_in_parent = self.right_list.mapTo(parent, QPoint(0, 0))
+            
+            # Get list widget sizes
+            left_list_width = self.left_list.width()
+            right_list_width = self.right_list.width()
+            
+            # Calculate absolute positions in parent coordinates
+            # Left point: right edge of left list
+            left_point_abs = QPoint(
+                left_list_pos_in_parent.x() + left_list_width,
+                left_list_pos_in_parent.y() + left_item_center_y
+            )
+            # Right point: left edge of right list
+            right_point_abs = QPoint(
+                right_list_pos_in_parent.x(),
+                right_list_pos_in_parent.y() + right_item_center_y
+            )
+            
+            # Convert to this widget's coordinates (this widget is on top of parent)
+            left_point = left_point_abs
+            right_point = right_point_abs
+            
+            # Get color for this match
+            color_idx = self.match_colors.get(left_idx, 0)
+            color = self.MATCH_COLORS[color_idx % len(self.MATCH_COLORS)] if self.MATCH_COLORS else QColor(173, 216, 230)
+            
+            # Draw line
+            pen = QPen(color, 3)
+            painter.setPen(pen)
+            painter.drawLine(left_point, right_point)
+    
+    def update_lines(self):
+        """Update the drawn lines."""
+        if self.parent():
+            parent = self.parent()
+            # Set geometry to cover entire parent
+            self.setGeometry(parent.rect())
+            self.raise_()  # Make sure it's on top
+            self.setVisible(True)
+        self.update()
+        self.repaint()  # Force repaint
+
+
 class MatchingWidget(BaseQuestionWidget):
     """Widget for matching questions."""
     
@@ -277,15 +433,19 @@ class MatchingWidget(BaseQuestionWidget):
         self.right_list = None
         self.matches = {}  # left_index -> right_index
         self.match_colors = {}  # left_index -> color_index
-        self.selected_left = -1  # Currently selected left item
         self.right_to_left = {}  # right_index -> left_index (reverse mapping)
+        self.selected_left_index = None  # Currently selected left item index
+        self.lines_widget = None  # Widget for drawing lines
         super().__init__(question_data, parent)
     
     def setup_ui(self):
         super().setup_ui()
         
-        # Two-column layout for matching
-        columns_layout = QHBoxLayout()
+        # Container widget for lists and lines
+        container_widget = QWidget()
+        container_layout = QHBoxLayout(container_widget)
+        container_layout.setContentsMargins(0, 0, 0, 0)
+        container_layout.setSpacing(0)
         
         # Left items with improved styling
         left_group = QGroupBox("Левая колонка")
@@ -307,6 +467,7 @@ class MatchingWidget(BaseQuestionWidget):
                 border: 1px solid #bdc3c7;
                 border-radius: 5px;
                 padding: 5px;
+                background-color: white;
             }
             QListWidget::item {
                 padding: 8px;
@@ -323,7 +484,9 @@ class MatchingWidget(BaseQuestionWidget):
         self.left_list.itemClicked.connect(self._on_left_clicked)
         self.left_list.itemDoubleClicked.connect(self._on_left_double_clicked)
         left_items = self.question_data.get("left_items", [])
-        for item in left_items:
+        for i, item_text in enumerate(left_items):
+            item = QListWidgetItem(item_text)
+            item.setData(Qt.ItemDataRole.UserRole, i)  # Store original index
             self.left_list.addItem(item)
         left_layout.addWidget(self.left_list)
         left_group.setLayout(left_layout)
@@ -348,6 +511,7 @@ class MatchingWidget(BaseQuestionWidget):
                 border: 1px solid #bdc3c7;
                 border-radius: 5px;
                 padding: 5px;
+                background-color: white;
             }
             QListWidget::item {
                 padding: 8px;
@@ -364,19 +528,66 @@ class MatchingWidget(BaseQuestionWidget):
         self.right_list.itemClicked.connect(self._on_right_clicked)
         self.right_list.itemDoubleClicked.connect(self._on_right_double_clicked)
         right_items = self.question_data.get("right_items", [])
-        for item in right_items:
+        for i, item_text in enumerate(right_items):
+            item = QListWidgetItem(item_text)
+            item.setData(Qt.ItemDataRole.UserRole, i)  # Store original index
             self.right_list.addItem(item)
         right_layout.addWidget(self.right_list)
         right_group.setLayout(right_layout)
         
-        columns_layout.addWidget(left_group)
-        columns_layout.addWidget(right_group)
-        self.layout.addLayout(columns_layout)
+        container_layout.addWidget(left_group)
+        
+        # Add spacer for lines
+        spacer = QWidget()
+        spacer.setMinimumWidth(50)
+        spacer.setMaximumWidth(50)
+        spacer.setStyleSheet("background: transparent;")
+        container_layout.addWidget(spacer)
+        
+        container_layout.addWidget(right_group)
+        
+        # Create a wrapper widget to hold container and lines widget
+        wrapper_widget = QWidget()
+        wrapper_layout = QVBoxLayout(wrapper_widget)
+        wrapper_layout.setContentsMargins(0, 0, 0, 0)
+        wrapper_layout.addWidget(container_widget)
+        
+        # Create lines widget that will draw lines between items
+        self.lines_widget = MatchingContainerWidget(
+            self.left_list, self.right_list, 
+            self.matches, self.match_colors, wrapper_widget
+        )
+        # Pass MATCH_COLORS reference
+        self.lines_widget.MATCH_COLORS = self.MATCH_COLORS
+        
+        self.layout.addWidget(wrapper_widget)
+        
+        # Show lines widget after layout and raise it to top
+        self.lines_widget.show()
+        self.lines_widget.raise_()
+        
+        # Update lines widget geometry after a short delay to ensure layout is complete
+        QTimer.singleShot(100, self._update_lines_widget_geometry)
+        QTimer.singleShot(200, self._update_lines_widget_geometry)  # Double check
+        QTimer.singleShot(500, self._update_lines_widget_geometry)  # Triple check after everything is settled
+    
+    def _update_lines_widget_geometry(self):
+        """Update lines widget geometry after layout is complete."""
+        if self.lines_widget and self.lines_widget.parent():
+            parent = self.lines_widget.parent()
+            self.lines_widget.setGeometry(0, 0, parent.width(), parent.height())
+            self.lines_widget.raise_()  # Make sure it's on top
+            self.lines_widget.update()
+            self.lines_widget.repaint()
+        
+        # Install event filter on lists to update lines when scrolled
+        self.left_list.verticalScrollBar().valueChanged.connect(self._update_lines)
+        self.right_list.verticalScrollBar().valueChanged.connect(self._update_lines)
         
         # Instructions with improved styling
         instructions = QLabel(
-            "Нажмите на элемент слева, затем нажмите на соответствующий элемент справа.\n"
-            "Двойной клик удаляет сопоставление."
+            "Нажмите на элемент в левой колонке, затем на соответствующий элемент в правой колонке для создания связи.\n"
+            "Двойной клик на сопоставленном элементе удаляет связь."
         )
         instructions.setWordWrap(True)
         instructions.setStyleSheet("""
@@ -402,44 +613,128 @@ class MatchingWidget(BaseQuestionWidget):
         return len(used_indices) % len(self.MATCH_COLORS)
     
     def _update_visuals(self):
-        """Update visual appearance of all items based on current matches."""
-        # Reset all items to default background
+        """Update visual appearance and lines based on current matches."""
+        # Update item backgrounds
         for i in range(self.left_list.count()):
             item = self.left_list.item(i)
-            if i in self.matches:
-                # Item is matched, use its assigned color
-                color_idx = self.match_colors.get(i, 0)
-                color = self.MATCH_COLORS[color_idx % len(self.MATCH_COLORS)]
-                item.setBackground(color)
+            left_index = item.data(Qt.ItemDataRole.UserRole)
+            if left_index is not None:
+                try:
+                    left_index = int(left_index) if not isinstance(left_index, int) else left_index
+                    if left_index == self.selected_left_index:
+                        # Highlight selected item
+                        item.setBackground(QColor(255, 200, 100))  # Orange highlight
+                    elif left_index in self.matches:
+                        # Item is matched - subtle background
+                        item.setBackground(QColor(240, 240, 240))
+                    else:
+                        item.setBackground(Qt.GlobalColor.white)
+                except (ValueError, TypeError):
+                    item.setBackground(Qt.GlobalColor.white)
             else:
-                # Item is not matched, use default
                 item.setBackground(Qt.GlobalColor.white)
         
         for i in range(self.right_list.count()):
             item = self.right_list.item(i)
-            if i in self.right_to_left:
-                # Item is matched, use the same color as its left partner
-                left_idx = self.right_to_left[i]
-                color_idx = self.match_colors.get(left_idx, 0)
-                color = self.MATCH_COLORS[color_idx % len(self.MATCH_COLORS)]
-                item.setBackground(color)
+            right_index = item.data(Qt.ItemDataRole.UserRole)
+            if right_index is not None:
+                try:
+                    right_index = int(right_index) if not isinstance(right_index, int) else right_index
+                    if right_index in self.right_to_left:
+                        # Item is matched - subtle background
+                        item.setBackground(QColor(240, 240, 240))
+                    else:
+                        item.setBackground(Qt.GlobalColor.white)
+                except (ValueError, TypeError):
+                    item.setBackground(Qt.GlobalColor.white)
             else:
-                # Item is not matched, use default
                 item.setBackground(Qt.GlobalColor.white)
+        
+        # Update lines
+        self._update_lines()
+    
+    def _update_lines(self):
+        """Update the line visualization."""
+        if self.lines_widget:
+            self.lines_widget.update_lines()
     
     def _on_left_clicked(self, item: QListWidgetItem):
-        """Handle left item click."""
-        left_index = self.left_list.row(item)
-        self.selected_left = left_index
+        """Handle left item click - select it for matching."""
+        left_index = item.data(Qt.ItemDataRole.UserRole)
+        if left_index is not None:
+            try:
+                left_index = int(left_index) if not isinstance(left_index, int) else left_index
+                self.selected_left_index = left_index
+                self._update_visuals()
+            except (ValueError, TypeError):
+                pass
+    
+    def _on_right_clicked(self, item: QListWidgetItem):
+        """Handle right item click - create match if left item is selected."""
+        right_index = item.data(Qt.ItemDataRole.UserRole)
         
-        # Highlight selected left item
-        for i in range(self.left_list.count()):
-            self.left_list.item(i).setSelected(i == left_index)
+        # If no left item is selected, just ignore
+        if self.selected_left_index is None:
+            # Try to deselect if clicking on already matched item
+            if right_index is not None:
+                try:
+                    right_index = int(right_index) if not isinstance(right_index, int) else right_index
+                    # Don't do anything, just return
+                except (ValueError, TypeError):
+                    pass
+            return
+        
+        if right_index is not None:
+            try:
+                right_index = int(right_index) if not isinstance(right_index, int) else right_index
+                left_index = self.selected_left_index
+                
+                # If right item is already matched, remove old match first
+                if right_index in self.right_to_left:
+                    old_left = self.right_to_left[right_index]
+                    if old_left in self.matches:
+                        del self.matches[old_left]
+                    if old_left in self.match_colors:
+                        del self.match_colors[old_left]
+                    del self.right_to_left[right_index]
+                
+                # If left item is already matched, remove old match
+                if left_index in self.matches:
+                    old_right = self.matches[left_index]
+                    if old_right in self.right_to_left:
+                        del self.right_to_left[old_right]
+                    # Keep color assignment for reuse
+                
+                # Create new match
+                self.matches[left_index] = right_index
+                self.right_to_left[right_index] = left_index
+                
+                # Assign color if not already assigned
+                if left_index not in self.match_colors:
+                    self.match_colors[left_index] = self._get_next_color_index()
+                
+                # Clear selection
+                self.selected_left_index = None
+                
+                # Update visuals immediately
+                self._update_visuals()
+                
+                # Force update of lines widget multiple times to ensure it's visible
+                if self.lines_widget:
+                    self.lines_widget.update_lines()
+                    # Also schedule delayed update in case geometry wasn't ready
+                    QTimer.singleShot(50, self.lines_widget.update_lines)
+                    QTimer.singleShot(150, self.lines_widget.update_lines)
+                
+                # Emit signal that answer changed
+                self.answer_changed.emit(self.get_answer())
+            except (ValueError, TypeError):
+                pass
     
     def _on_left_double_clicked(self, item: QListWidgetItem):
         """Handle left item double click - remove match."""
-        left_index = self.left_list.row(item)
-        if left_index in self.matches:
+        left_index = item.data(Qt.ItemDataRole.UserRole)
+        if left_index is not None and left_index in self.matches:
             right_index = self.matches[left_index]
             # Remove from matches
             del self.matches[left_index]
@@ -451,49 +746,13 @@ class MatchingWidget(BaseQuestionWidget):
                 del self.match_colors[left_index]
             # Update visuals
             self._update_visuals()
-            self.selected_left = -1
-    
-    def _on_right_clicked(self, item: QListWidgetItem):
-        """Handle right item click."""
-        right_index = self.right_list.row(item)
-        left_selected = self.selected_left
-        
-        # If right item is already matched, remove old match first
-        if right_index in self.right_to_left:
-            old_left = self.right_to_left[right_index]
-            if old_left in self.matches:
-                del self.matches[old_left]
-            if old_left in self.match_colors:
-                del self.match_colors[old_left]
-            del self.right_to_left[right_index]
-        
-        # If left item is already matched, remove old match
-        if left_selected >= 0:
-            if left_selected in self.matches:
-                old_right = self.matches[left_selected]
-                if old_right in self.right_to_left:
-                    del self.right_to_left[old_right]
-                # Keep color assignment for reuse
-            
-            # Create new match
-            self.matches[left_selected] = right_index
-            self.right_to_left[right_index] = left_selected
-            
-            # Assign color if not already assigned
-            if left_selected not in self.match_colors:
-                self.match_colors[left_selected] = self._get_next_color_index()
-            
-            # Update visuals
-            self._update_visuals()
-            
-            # Clear selection after matching
-            self.selected_left = -1
-            self.left_list.clearSelection()
+            # Emit signal that answer changed
+            self.answer_changed.emit(self.get_answer())
     
     def _on_right_double_clicked(self, item: QListWidgetItem):
         """Handle right item double click - remove match."""
-        right_index = self.right_list.row(item)
-        if right_index in self.right_to_left:
+        right_index = item.data(Qt.ItemDataRole.UserRole)
+        if right_index is not None and right_index in self.right_to_left:
             left_index = self.right_to_left[right_index]
             # Remove from matches
             if left_index in self.matches:
@@ -505,6 +764,8 @@ class MatchingWidget(BaseQuestionWidget):
                 del self.match_colors[left_index]
             # Update visuals
             self._update_visuals()
+            # Emit signal that answer changed
+            self.answer_changed.emit(self.get_answer())
     
     def get_answer(self) -> dict:
         """Get current matches."""

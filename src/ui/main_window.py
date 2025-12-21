@@ -86,20 +86,57 @@ class MainWindow(QMainWindow):
         main_layout.setSpacing(15)
         main_layout.setContentsMargins(20, 20, 20, 20)
         
-        # Header with gradient
-        self.header_label = QLabel("Добро пожаловать! Загрузка квиза...")
-        self.header_label.setFont(QFont("Arial", 18, QFont.Weight.Bold))
-        self.header_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.header_label.setStyleSheet("""
-            QLabel {
+        # Header with gradient and restart button
+        header_widget = QWidget()
+        header_widget.setStyleSheet("""
+            QWidget {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:1, 
                     stop:0 #4A90E2, stop:1 #357ABD);
-                color: white;
-                padding: 25px;
                 border-radius: 10px;
             }
         """)
-        main_layout.addWidget(self.header_label)
+        header_layout = QHBoxLayout(header_widget)
+        header_layout.setContentsMargins(25, 15, 25, 15)
+        
+        # Restart button (left side)
+        self.restart_button = QPushButton("🔄 Начать сначала")
+        self.restart_button.setFont(QFont("Arial", 11, QFont.Weight.Bold))
+        self.restart_button.setStyleSheet("""
+            QPushButton {
+                background-color: rgba(255, 255, 255, 0.2);
+                color: white;
+                border: 2px solid white;
+                border-radius: 6px;
+                padding: 8px 16px;
+                font-size: 11px;
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 255, 255, 0.3);
+            }
+            QPushButton:pressed {
+                background-color: rgba(255, 255, 255, 0.4);
+            }
+        """)
+        self.restart_button.clicked.connect(self._confirm_restart_quiz)
+        header_layout.addWidget(self.restart_button)
+        
+        header_layout.addStretch()
+        
+        # Header label (center)
+        self.header_label = QLabel("Добро пожаловать! Загрузка квиза...")
+        self.header_label.setFont(QFont("Arial", 18, QFont.Weight.Bold))
+        self.header_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.header_label.setStyleSheet("color: white;")
+        header_layout.addWidget(self.header_label)
+        
+        header_layout.addStretch()
+        
+        # Placeholder widget to balance the layout (same width as restart button)
+        placeholder = QWidget()
+        placeholder.setFixedWidth(self.restart_button.sizeHint().width())
+        header_layout.addWidget(placeholder)
+        
+        main_layout.addWidget(header_widget)
         
         # Scroll area for question widget
         scroll_area = QScrollArea()
@@ -137,15 +174,6 @@ class MainWindow(QMainWindow):
         nav_layout.addWidget(self.question_info_label)
         
         main_layout.addLayout(nav_layout)
-        
-        # Status bar
-        self.statusBar().setStyleSheet("""
-            QStatusBar {
-                background-color: #e8e8e8;
-                color: #333;
-            }
-        """)
-        self.statusBar().showMessage("Готов")
     
     def load_question(self, index: int):
         """Load and display a question by index."""
@@ -304,16 +332,26 @@ class MainWindow(QMainWindow):
                 widget.text_input.setText(answer)
         elif widget_type == "MatchingWidget":
             if isinstance(answer, dict):
-                widget.matches = answer.copy()
+                widget.matches = {}
                 # Restore reverse mapping and colors
                 widget.right_to_left = {}
                 widget.match_colors = {}
-                for left_idx, right_idx in answer.items():
-                    if 0 <= left_idx < widget.left_list.count() and 0 <= right_idx < widget.right_list.count():
-                        widget.right_to_left[right_idx] = left_idx
-                        # Assign color if not already assigned
-                        if left_idx not in widget.match_colors:
-                            widget.match_colors[left_idx] = widget._get_next_color_index()
+                for left_idx_str, right_idx_val in answer.items():
+                    try:
+                        # Convert keys and values to int (JSON keys are always strings)
+                        left_idx = int(left_idx_str) if isinstance(left_idx_str, str) else left_idx_str
+                        right_idx = int(right_idx_val) if isinstance(right_idx_val, str) else right_idx_val
+                        
+                        if isinstance(left_idx, int) and isinstance(right_idx, int):
+                            if 0 <= left_idx < widget.left_list.count() and 0 <= right_idx < widget.right_list.count():
+                                widget.matches[left_idx] = right_idx
+                                widget.right_to_left[right_idx] = left_idx
+                                # Assign color if not already assigned
+                                if left_idx not in widget.match_colors:
+                                    widget.match_colors[left_idx] = widget._get_next_color_index()
+                    except (ValueError, TypeError):
+                        # Skip invalid entries
+                        continue
                 # Update visuals
                 widget._update_visuals()
         elif widget_type == "OrderingWidget":
@@ -647,6 +685,19 @@ class MainWindow(QMainWindow):
             return str(answer)
         
         return str(answer)
+    
+    def _confirm_restart_quiz(self):
+        """Show confirmation dialog before restarting quiz."""
+        reply = QMessageBox.question(
+            self,
+            "Начать сначала",
+            "Вы уверены, что хотите начать квиз заново? Все ваши ответы будут удалены.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            self._restart_quiz()
     
     def _restart_quiz(self):
         """Restart quiz by clearing cache and resetting state."""
