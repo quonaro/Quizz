@@ -22,15 +22,15 @@ jobs:
     - name: Install Pandoc and LaTeX
       run: |
         sudo apt-get update
-        sudo apt-get install -y pandoc texlive-xetex texlive-fonts-recommended texlive-lang-cyrillic
+        sudo apt-get install -y pandoc texlive-xetex texlive-fonts-recommended texlive-lang-cyrillic fonts-liberation fonts-noto-color-emoji
     
     - name: Convert Markdown to PDF
       run: |
         pandoc CODE_TUTORIAL.md -o CODE_TUTORIAL.pdf \
           --pdf-engine=xelatex \
           -V geometry:margin=1in \
-          -V mainfont="DejaVu Sans" \
-          -V monofont="DejaVu Sans Mono" \
+          -V mainfont="Liberation Sans" \
+          -V monofont="Liberation Mono" \
           -V lang=ru-RU
     
     - name: Upload PDF artifact
