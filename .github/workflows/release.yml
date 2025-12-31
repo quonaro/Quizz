@@ -1,0 +1,75 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.14'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+    
+    - name: Build executable
+      run: |
+        python build_exe.py
+    
+    - name: Install Pandoc for PDF conversion
+      run: |
+        choco install pandoc -y
+        choco install miktex -y
+    
+    - name: Convert Markdown to PDF
+      run: |
+        pandoc instruction.md -o instruction.pdf --pdf-engine=xelatex -V geometry:margin=1in
+    
+    - name: Create release archive
+      run: |
+        mkdir release
+        Copy-Item dist\Квиз.exe release\
+        Copy-Item instruction.pdf release\
+        Copy-Item images release\ -Recurse
+        Copy-Item questions-auto.json release\
+        Compress-Archive -Path release\* -DestinationPath Quiz-Release.zip
+    
+    - name: Get current date
+      id: date
+      run: echo "date=$(Get-Date -Format 'yyyy-MM-dd-HHmm')" >> $env:GITHUB_OUTPUT
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: release-${{ steps.date.outputs.date }}
+        name: Quiz Release ${{ steps.date.outputs.date }}
+        body: |
+          Автоматический релиз квиза
+          
+          Содержимое архива:
+          - Квиз.exe - исполняемый файл для Windows
+          - instruction.pdf - инструкция по использованию
+          - images/ - папка с изображениями
+          - questions-auto.json - файл с вопросами
+          
+          Для запуска распакуйте архив и запустите Квиз.exe
+        files: |
+          Quiz-Release.zip
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

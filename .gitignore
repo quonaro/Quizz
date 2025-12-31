@@ -3,3 +3,5 @@ build/
 venv/
 *.spec
 nuitka-crash-report.xml
+release/
+Quiz-Release.zip
