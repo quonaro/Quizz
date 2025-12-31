@@ -35,8 +35,13 @@ jobs:
         choco install miktex -y
     
     - name: Convert Markdown to PDF
+      shell: pwsh
       run: |
-        pandoc instruction.md -o instruction.pdf --pdf-engine=xelatex -V geometry:margin=1in
+        # Add MiKTeX to PATH
+        $env:Path = "C:\Program Files\MiKTeX\miktex\bin\x64;" + $env:Path
+        # Use pdflatex instead of xelatex (more reliable in CI)
+        pandoc instruction.md -o instruction.pdf --pdf-engine=pdflatex -V geometry:margin=1in
+      continue-on-error: false
     
     - name: Create release archive
       run: |
