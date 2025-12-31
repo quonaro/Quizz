@@ -1,42 +1,17 @@
-import json
-import time
 import os
 import sys
+import tkinter as tk
+from lib.PIL import Image, ImageTk
 
-# Добавляем папку lib в пути поиска, чтобы использовать встроенные зависимости
-# Add the lib folder to the search paths to use bundled dependencies
 def get_resource_path(relative_path):
     """ Получает абсолютный путь к ресурсу, работает для скрипта и для EXE """
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, relative_path)
-    # Для Nuitka в режиме --onefile или обычного запуска
-    base_path = os.path.dirname(os.path.abspath(sys.argv[0]))
-    # Если мы в режиме разработки, проверяем текущую директорию
-    if not os.path.exists(os.path.join(base_path, relative_path)):
-        base_path = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(base_path, relative_path)
+    return os.path.abspath(relative_path)
 
-lib_path = get_resource_path('lib')
-if os.path.exists(lib_path):
-    sys.path.append(lib_path)
-
-# Импортируем библиотеки для работы с картинками (теперь они в папке lib)
-# Import libraries for working with images (they are now in the lib folder)
-try:
-    from PIL import Image, ImageTk
-    import tkinter as tk
-    HAS_GUI = True
-except ImportError:
-    HAS_GUI = False
-
-def show_image(image_path, duration=3):
-    """Показывает картинку в окне на несколько секунд"""
-    if not HAS_GUI:
-        print(f"Ошибка: Библиотеки (PIL/tkinter) не загружены. Проверьте папку 'lib'.")
-        return
-
+def kartinka(image_path, duration=3):
     try:
-        full_path = os.path.abspath(image_path)
+        full_path = get_resource_path(image_path)
         if not os.path.exists(full_path):
             print(f"Ошибка: Файл не найден по пути: {full_path}")
             return
@@ -70,61 +45,265 @@ def show_image(image_path, duration=3):
         # Закрываем через время
         root.after(int(duration * 1000), root.destroy)
         root.mainloop()
-
     except Exception as e:
-        print(f"Критическая ошибка при отображении {image_path}: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"Картинка не открылась: {e}")
 
-def main():
-    # Открываем файл с вопросами. (Open the questions file)
-    try:
-        questions_path = get_resource_path('questions-auto.json')
-        with open(questions_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-    except FileNotFoundError:
-        print(f"Файл {questions_path} не найден!")
-        return
+# Счет
+score = 0
 
-    score = 0
-    total = len(data)
+# Вопрос 1
+print("The Christmas greeting is: (Рождественское приветствие звучит:)")
+print("1: Happy Christmas!")
+print("2: Merry Christmas!")
+print("3: Lucky Christmas!")
+print("4: Lovely Christmas!")
+otvet = input("Введите ответ: ")
+if otvet == "2":
+    print("Правильно!")
+    score = score + 1
+    # Открываем хорошую картинку
+    kartinka(r"images\image1.png")
+else:
+    print("Неправильно!")
+    # Открываем плохую картинку
+    kartinka(r"images\image2.png")
 
-    for key in data:
-        print("\n--------------------------------")
-        item = data[key]
-        question_text = item['question']
-        print(f"Вопрос {key}: {question_text}")
+print("--------------------------------")
 
-        # Показываем варианты ответов (Show answers)
-        answers = item['answers']
-        for num in answers:
-            print(f"{num}: {answers[num]}")
+# Вопрос 2
+print("The main Christmas treat: (Главное рождественское угощение:)")
+print("1: Duck")
+print("2: Goose")
+print("3: Turkey")
+print("4: Chicken")
+otvet = input("Введите ответ: ")
+if otvet == "3":
+    print("Правильно!")
+    score = score + 1
+    kartinka(r"images\image3.png")
+else:
+    print("Неправильно!")
+    kartinka(r"images\image2.png")
 
-        # Спрашиваем ответ (Ask for answer)
-        user_input = input("Введите номер правильного ответа: ")
-        correct = item['correct_answer']
-        
-        if user_input.strip() == correct:
-            print("Правильно! Молодец!")
-            score += 1
-            image_to_show = item.get('good-image', item.get('image'))
-        else:
-            print(f"Неправильно :( Правильный ответ был: {correct}")
-            image_to_show = item.get('bad-image', item.get('image'))
+print("--------------------------------")
 
-        # Показываем картинку (Show image)
-        if image_to_show:
-            show_image(get_resource_path(image_to_show), 3)
+# Вопрос 3
+print("The symbol of Halloween is: (Символ Хэллоуина – это)")
+print("1: Pumpkin")
+print("2: Squash")
+print("3: Watermelon")
+print("4: Os")
+otvet = input("Введите ответ: ")
+if otvet == "1":
+    print("Правильно!")
+    score = score + 1
+    kartinka(r"images\image4.png")
+else:
+    print("Неправильно!")
+    kartinka(r"images\image2.png")
 
-    # Итоги (Results)
-    print("\n================================")
-    print(f"Игра окончена! Твой счет: {score} из {total}")
-    if score == total:
-        print("Ты гений!")
-    elif score > total / 2:
-        print("Неплохо!")
-    else:
-        print("Попробуй еще раз!")
+print("--------------------------------")
 
-if __name__ == "__main__":
-    main()
+# Вопрос 4
+print("Which animal is most often used on Easter cards? (Какое животное чаще всего изображено на Пасхальных открытках?)")
+print("1: Rabbit")
+print("2: Fox")
+print("3: Wolf")
+print("4: Sheep")
+otvet = input("Введите ответ: ")
+if otvet == "1":
+    print("Правильно!")
+    score = score + 1
+    kartinka(r"images\image5.png")
+else:
+    print("Неправильно!")
+    kartinka(r"images\image2.png")
+
+print("--------------------------------")
+
+# Вопрос 5
+print("Which plant is associated with St. Patrick's Day? (Какое растение ассоциируется с Днем Святого Патрика?)")
+print("1: Sunflower")
+print("2: Fern")
+print("3: Shamrock")
+print("4: Spruce")
+otvet = input("Введите ответ: ")
+if otvet == "3":
+    print("Правильно!")
+    score = score + 1
+    kartinka(r"images\image6.png")
+else:
+    print("Неправильно!")
+    kartinka(r"images\image2.png")
+
+print("--------------------------------")
+
+# Вопрос 6
+print("One … a day, keeps doctors away!")
+print("1: apple")
+print("2: pear")
+print("3: lemon")
+print("4: ice cream")
+otvet = input("Введите ответ: ")
+if otvet == "1":
+    print("Правильно!")
+    score = score + 1
+    kartinka(r"images\image7.png")
+else:
+    print("Неправильно!")
+    kartinka(r"images\image2.png")
+
+print("--------------------------------")
+
+# Вопрос 7
+print("Measure thrice and cut …")
+print("1: once")
+print("2: twice")
+print("3: first")
+print("4: last")
+otvet = input("Введите ответ: ")
+if otvet == "1":
+    print("Правильно!")
+    score = score + 1
+    kartinka(r"images\image7.png")
+else:
+    print("Неправильно!")
+    kartinka(r"images\image2.png")
+
+print("--------------------------------")
+
+# Вопрос 8
+print("Don’t judge a book by its ...")
+print("1: Pictures")
+print("2: Pages Cover")
+print("3: Author")
+otvet = input("Введите ответ: ")
+if otvet == "3":
+    print("Правильно!")
+    score = score + 1
+    kartinka(r"images\image7.png")
+else:
+    print("Неправильно!")
+    kartinka(r"images\image2.png")
+
+print("--------------------------------")
+
+# Вопрос 9
+print("A bird may be known by its …")
+print("1: feathers")
+print("2: break")
+print("3: flight")
+print("4: songs")
+otvet = input("Введите ответ: ")
+if otvet == "1":
+    print("Правильно!")
+    score = score + 1
+    kartinka(r"images\image7.png")
+else:
+    print("Неправильно!")
+    kartinka(r"images\image2.png")
+
+print("--------------------------------")
+
+# Вопрос 10
+print("Which phrase is a good luck wish?")
+print("1: Break a leg!")
+print("2: Not a fluff or a feather!")
+print("3: Best of luck!")
+print("4: Blow them away!")
+otvet = input("Введите ответ: ")
+if otvet in ["1", "2", "3", "4"]:
+    print("Правильно!")
+    score = score + 1
+    kartinka(r"images\image7.png")
+else:
+    print("Неправильно!")
+    kartinka(r"images\image2.png")
+
+print("--------------------------------")
+
+# Вопрос 11
+print("What is the name of the tradition of afternoon tea drinking in England? (Как называется традиция послеобеденного чаепития в Англии?)")
+print("1: 6 p.m")
+print("2: 5 o'clock")
+print("3: evening tea")
+print("4: lunch")
+otvet = input("Введите ответ: ")
+if otvet == "2":
+    print("Правильно!")
+    score = score + 1
+    kartinka(r"images\image8.png")
+else:
+    print("Неправильно!")
+    kartinka(r"images\image2.png")
+
+print("--------------------------------")
+
+# Вопрос 12
+print("Santa  delivers gifts through the: (Санта-Клаус доставляет подарки через:)")
+print("1: backdoor")
+print("2: window")
+print("3: door")
+print("4: chimney")
+otvet = input("Введите ответ: ")
+if otvet == "4":
+    print("Правильно!")
+    score = score + 1
+    kartinka(r"images\image9.png")
+else:
+    print("Неправильно!")
+    kartinka(r"images\image2.png")
+
+print("--------------------------------")
+
+# Вопрос 13
+print("At Easter, parents hide, and children look for: (На Пасху родители прячутся, а дети ищут:)")
+print("1: eggs")
+print("2: cakes")
+print("3: gifts")
+print("4: candies")
+otvet = input("Введите ответ: ")
+if otvet == "1":
+    print("Правильно!")
+    score = score + 1
+    kartinka(r"images\image10.png")
+else:
+    print("Неправильно!")
+    kartinka(r"images\image2.png")
+
+print("--------------------------------")
+
+# Вопрос 14
+print("Halloween is one of the favorite holidays...")
+print("1: Happy Halloween")
+print("2: Not a fluff or a feather")
+print("3: Trick or treat!")
+print("4: Good luck!")
+otvet = input("Введите ответ: ")
+if otvet == "3":
+    print("Правильно!")
+    score = score + 1
+    kartinka(r"images\image11.png")
+else:
+    print("Неправильно!")
+    kartinka(r"images\image2.png")
+
+print("--------------------------------")
+
+# Вопрос 15
+print("In Ireland, it is customary to wear green clothes on St. Patrick's Day or attach a ** to one's clothing.")
+print("1: Rose")
+print("2: Shamrock")
+print("3: Lily")
+print("4: Fern")
+otvet = input("Введите ответ: ")
+if otvet == "2":
+    print("Правильно!")
+    score = score + 1
+    kartinka(r"images\image6.png")
+else:
+    print("Неправильно!")
+    kartinka(r"images\image2.png")
+
+print("================================")
+print("Твой счет: " + str(score))
