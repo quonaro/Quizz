@@ -3,8 +3,7 @@ name: Build and Release
 on:
   push:
     branches:
-      - main
-      - master
+      - simple
     tags:
       - 'v*'
 
