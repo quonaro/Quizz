@@ -26,13 +26,13 @@ jobs:
     
     - name: Convert Markdown to PDF
       run: |
-        pandoc instruction.md -o instruction.pdf --pdf-engine=xelatex -V geometry:margin=1in
+        pandoc CODE_TUTORIAL.md -o CODE_TUTORIAL.pdf --pdf-engine=xelatex -V geometry:margin=1in
     
     - name: Upload PDF artifact
       uses: actions/upload-artifact@v4
       with:
-        name: instruction-pdf
-        path: instruction.pdf
+        name: tutorial-pdf
+        path: CODE_TUTORIAL.pdf
         retention-days: 1
 
   build-and-release:
@@ -60,14 +60,21 @@ jobs:
     - name: Download PDF artifact
       uses: actions/download-artifact@v4
       with:
-        name: instruction-pdf
+        name: tutorial-pdf
     
     - name: Create release archive
       run: |
         mkdir release
         Copy-Item dist\Quiz.exe release\
-        Copy-Item main.py release\
-        Copy-Item instruction.pdf release\
+        Copy-Item CODE_TUTORIAL.pdf release\
+        
+        # Создаем папку code с исходниками
+        mkdir release\code
+        Copy-Item main.py release\code\
+        Copy-Item questions-auto.json release\code\
+        Copy-Item CODE_TUTORIAL.md release\code\
+        Copy-Item images release\code\ -Recurse
+        
         Compress-Archive -Path release\* -DestinationPath Quiz-Release.zip
     
     - name: Read and increment version
@@ -103,10 +110,15 @@ jobs:
           
           Содержимое архива:
           - Quiz.exe - исполняемый файл для Windows (все ресурсы встроены)
-          - main.py - исходный код программы
-          - instruction.pdf - инструкция по использованию
+          - CODE_TUTORIAL.pdf - подробный учебник по коду программы
+          - code/ - папка с исходным кодом:
+            - main.py - исходный код программы с комментариями
+            - CODE_TUTORIAL.md - учебник в формате Markdown
+            - images/ - папка с изображениями
+            - questions-auto.json - файл с вопросами
           
           Для запуска распакуйте архив и запустите Quiz.exe
+          Для изучения кода прочитайте CODE_TUTORIAL.pdf или откройте папку code/
         files: |
           Quiz-Release.zip
         draft: false
