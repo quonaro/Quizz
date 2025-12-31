@@ -26,7 +26,12 @@ jobs:
     
     - name: Convert Markdown to PDF
       run: |
-        pandoc CODE_TUTORIAL.md -o CODE_TUTORIAL.pdf --pdf-engine=xelatex -V geometry:margin=1in
+        pandoc CODE_TUTORIAL.md -o CODE_TUTORIAL.pdf \
+          --pdf-engine=xelatex \
+          -V geometry:margin=1in \
+          -V mainfont="DejaVu Sans" \
+          -V monofont="DejaVu Sans Mono" \
+          -V lang=ru-RU
     
     - name: Upload PDF artifact
       uses: actions/upload-artifact@v4
