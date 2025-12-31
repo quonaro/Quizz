@@ -48,11 +48,10 @@ def kartinka(image_path, duration=3):
     except Exception as e:
         print(f"Картинка не открылась: {e}")
 
-# Счет
-score = 0
+
 
 def ask_question(lines, correct_answer, success_img):
-    global score
+
     while True:
         for line in lines:
             print(line)
@@ -66,8 +65,8 @@ def ask_question(lines, correct_answer, success_img):
             is_correct = True
             
         if is_correct:
-            print("Правильно!")
-            score += 1
+            print("Correct!")
+
             kartinka(success_img)
             break
         else:
@@ -209,5 +208,5 @@ ask_question([
     "4: Fern"
 ], "2", r"images\image6.png")
 
-print("================================")
-print("Твой счет: " + str(score))
+
+
