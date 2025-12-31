@@ -1,6 +1,0 @@
-"""Quiz models package."""
-
-
-
-
-

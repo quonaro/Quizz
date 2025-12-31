@@ -1,0 +1,191 @@
+{
+    "1": {
+        "question": "The Christmas greeting is:\n(Рождественское приветствие звучит:)",
+        "answers": {
+            "1": "Happy Christmas!",
+            "2": "Merry Christmas!",
+            "3": "Lucky Christmas!",
+            "4": "Lovely Christmas!"
+        },
+        "correct_answer": "2",
+        "image": "images/image1.jpeg",
+        "good-image": "images/image7.png",
+        "bad-image": "images/image2.png"
+    },
+    "2": {
+        "question": "The main Christmas treat:\n(Главное рождественское угощение:)",
+        "answers": {
+            "1": "Duck",
+            "2": "Goose",
+            "3": "Turkey",
+            "4": "Chicken"
+        },
+        "correct_answer": "3",
+        "image": "images/image3.jpeg",
+        "good-image": "images/image7.png",
+        "bad-image": "images/image2.png"
+    },
+    "3": {
+        "question": "The symbol of Halloween is:\n(Символ Хэллоуина – это)",
+        "answers": {
+            "1": "Pumpkin. 2 Squash. 3 Watermelon. 4 Os"
+        },
+        "correct_answer": "1",
+        "image": "images/image4.jpeg",
+        "good-image": "images/image7.png",
+        "bad-image": "images/image2.png"
+    },
+    "4": {
+        "question": "Which animal is most often used on Easter cards?\n(Какое животное чаще всего изображено на Пасхальных открытках?)",
+        "answers": {
+            "1": "Rabbit",
+            "2": "Fox",
+            "3": "Wolf",
+            "4": "Sheep"
+        },
+        "correct_answer": "1",
+        "image": "images/image5.jpeg",
+        "good-image": "images/image7.png",
+        "bad-image": "images/image2.png"
+    },
+    "5": {
+        "question": "Which plant is associated with St. Patrick's Day?\n(Какое растение ассоциируется с Днем Святого Патрика?)",
+        "answers": {
+            "1": "Sunflower",
+            "2": "Fern",
+            "3": "Shamrock",
+            "4": "Spruce"
+        },
+        "correct_answer": "3",
+        "image": "images/image6.jpeg",
+        "good-image": "images/image7.png",
+        "bad-image": "images/image2.png"
+    },
+    "6": {
+        "question": "One … a day, keeps doctors away!",
+        "answers": {
+            "1": "apple",
+            "2": "pear",
+            "3": "lemon",
+            "4": "ice cream"
+        },
+        "correct_answer": "1",
+        "image": "images/image7.png",
+        "good-image": "images/image7.png",
+        "bad-image": "images/image2.png"
+    },
+    "7": {
+        "question": "Measure thrice and cut …",
+        "answers": {
+            "1": "once",
+            "2": "twice",
+            "3": "first",
+            "4": "last"
+        },
+        "correct_answer": "1",
+        "good-image": "images/image7.png",
+        "bad-image": "images/image2.png"
+    },
+    "8": {
+        "question": "Don’t judge a book by its ...",
+        "answers": {
+            "1": "Pictures",
+            "2": "Pages Cover",
+            "3": "Author"
+        },
+        "correct_answer": "3",
+        "image": "images/image7.png",
+        "good-image": "images/image7.png",
+        "bad-image": "images/image2.png"
+    },
+    "9": {
+        "question": "A bird may be known by its …",
+        "answers": {
+            "1": "feathers",
+            "2": "break",
+            "3": "flight",
+            "4": "songs"
+        },
+        "correct_answer": "1",
+        "image": "images/image7.png",
+        "good-image": "images/image7.png",
+        "bad-image": "images/image2.png"
+    },
+    "10": {
+        "question": "Which phrase is a good luck wish?",
+        "answers": {
+            "1": "Break a leg!",
+            "2": "Not a fluff or a feather!",
+            "3": "Best of luck!",
+            "4": "Blow them away!"
+        },
+        "correct_answer": "2",
+        "good-image": "images/image7.png",
+        "bad-image": "images/image2.png"
+    },
+    "11": {
+        "question": "What is the name of the tradition of afternoon tea drinking in England?\n(Как называется традиция послеобеденного чаепития в Англии?)",
+        "answers": {
+            "1": "p.m",
+            "2": "o' clock",
+            "3": "evening tea",
+            "4": "lunch"
+        },
+        "correct_answer": "2",
+        "image": "images/image8.png",
+        "good-image": "images/image7.png",
+        "bad-image": "images/image2.png"
+    },
+    "12": {
+        "question": "Santa  delivers gifts through the:\n(Санта-Клаус доставляет подарки через:)",
+        "answers": {
+            "1": "backdoor",
+            "2": "window",
+            "3": "door",
+            "4": "chimney"
+        },
+        "correct_answer": "4",
+        "image": "images/image9.png",
+        "good-image": "images/image7.png",
+        "bad-image": "images/image2.png"
+    },
+    "13": {
+        "question": "At Easter, parents hide, and children look for:\n(На Пасху родители прячутся, а дети ищут:)",
+        "answers": {
+            "1": "eggs",
+            "2": "cakes",
+            "3": "gifts",
+            "4": "candies"
+        },
+        "correct_answer": "1",
+        "image": "images/image10.png",
+        "good-image": "images/image7.png",
+        "bad-image": "images/image2.png"
+    },
+    "14": {
+        "question": "Halloween is one of the favorite holidays of children who run through the streets in the most unusual costumes, knock on the doors of houses and greet the owners with the words:\n(Хэллоуин - один из любимых праздников детей, которые бегают по улицам в самых необычных костюмах, стучат в двери домов и приветствуют хозяев словами:)",
+        "answers": {
+            "1": "Happy Halloween",
+            "2": "Not a fluff or a feather",
+            "3": "Trick or treat!",
+            "4": "Good luck!"
+        },
+        "correct_answer": "3",
+        "image": "images/image11.jpeg",
+        "good-image": "images/image7.png",
+        "bad-image": "images/image2.png"
+    },
+    "15": {
+        "question": "In Ireland, it is customary to wear green clothes on St. Patrick's Day or attach a ** to one's clothing.\n(В Ирландии в День Святого Патрика принято носить зеленую одежду или прикреплять к своей одежде **.)",
+        "answers": {
+            "1": "Rose",
+            "2": "Shamrock",
+            "3": "Lily",
+            "4": "Fern"
+        },
+        "correct_answer": "2",
+        "image": "images/image6.jpeg",
+        "good-image": "images/image7.png",
+        "bad-image": "images/image2.png"
+    }
+}
