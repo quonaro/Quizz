@@ -41,7 +41,7 @@ jobs:
     - name: Create release archive
       run: |
         mkdir release
-        Copy-Item dist\Квиз.exe release\
+        Copy-Item dist\Quiz.exe release\
         Copy-Item instruction.pdf release\
         Copy-Item images release\ -Recurse
         Copy-Item questions-auto.json release\
@@ -60,12 +60,12 @@ jobs:
           Автоматический релиз квиза
           
           Содержимое архива:
-          - Квиз.exe - исполняемый файл для Windows
+          - Quiz.exe - исполняемый файл для Windows
           - instruction.pdf - инструкция по использованию
           - images/ - папка с изображениями
           - questions-auto.json - файл с вопросами
           
-          Для запуска распакуйте архив и запустите Квиз.exe
+          Для запуска распакуйте архив и запустите Quiz.exe
         files: |
           Quiz-Release.zip
         draft: false

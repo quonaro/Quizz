@@ -14,7 +14,7 @@ def build():
     cmd = [
         sys.executable, "-m", "PyInstaller",
         "--onefile",
-        "--name", "Квиз",
+        "--name", "Quiz",
         "--add-data", f"images{os.pathsep}images",
         "--add-data", f"questions-auto.json{os.pathsep}.",
         "--add-data", f"lib{os.pathsep}lib",
@@ -24,7 +24,7 @@ def build():
     print(f"Running command: {' '.join(cmd)}")
     
     try:
-        subprocess.run(cmd, check=True)
+        subprocess.run(cmd, check=True, encoding='utf-8', errors='replace')
         print("\nBuild successful! You can find main.exe in the 'dist' folder.")
     except subprocess.CalledProcessError as e:
         print(f"\nBuild failed with error: {e}")
