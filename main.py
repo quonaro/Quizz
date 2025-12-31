@@ -51,259 +51,163 @@ def kartinka(image_path, duration=3):
 # Счет
 score = 0
 
-# Вопрос 1
-print("The Christmas greeting is: (Рождественское приветствие звучит:)")
-print("1: Happy Christmas!")
-print("2: Merry Christmas!")
-print("3: Lucky Christmas!")
-print("4: Lovely Christmas!")
-otvet = input("Введите ответ: ")
-if otvet == "2":
-    print("Правильно!")
-    score = score + 1
-    # Открываем хорошую картинку
-    kartinka(r"images\image1.png")
-else:
-    print("Неправильно!")
-    # Открываем плохую картинку
-    kartinka(r"images\image2.png")
+def ask_question(lines, correct_answer, success_img):
+    global score
+    while True:
+        for line in lines:
+            print(line)
+        otvet = input("Enter answer: ")
+        
+        is_correct = False
+        if isinstance(correct_answer, list):
+            if otvet in correct_answer:
+                is_correct = True
+        elif otvet == correct_answer:
+            is_correct = True
+            
+        if is_correct:
+            print("Правильно!")
+            score += 1
+            kartinka(success_img)
+            break
+        else:
+            print("Wrong! Try again.")
+            kartinka(r"images\image2.png")
+    print("--------------------------------")
 
-print("--------------------------------")
+# Вопрос 1
+ask_question([
+    "The Christmas greeting is: (Рождественское приветствие звучит:)",
+    "1: Happy Christmas!",
+    "2: Merry Christmas!",
+    "3: Lucky Christmas!",
+    "4: Lovely Christmas!"
+], "2", r"images\image1.png")
 
 # Вопрос 2
-print("The main Christmas treat: (Главное рождественское угощение:)")
-print("1: Duck")
-print("2: Goose")
-print("3: Turkey")
-print("4: Chicken")
-otvet = input("Введите ответ: ")
-if otvet == "3":
-    print("Правильно!")
-    score = score + 1
-    kartinka(r"images\image3.png")
-else:
-    print("Неправильно!")
-    kartinka(r"images\image2.png")
-
-print("--------------------------------")
+ask_question([
+    "The main Christmas treat: (Главное рождественское угощение:)",
+    "1: Duck",
+    "2: Goose",
+    "3: Turkey",
+    "4: Chicken"
+], "3", r"images\image3.png")
 
 # Вопрос 3
-print("The symbol of Halloween is: (Символ Хэллоуина – это)")
-print("1: Pumpkin")
-print("2: Squash")
-print("3: Watermelon")
-print("4: Os")
-otvet = input("Введите ответ: ")
-if otvet == "1":
-    print("Правильно!")
-    score = score + 1
-    kartinka(r"images\image4.png")
-else:
-    print("Неправильно!")
-    kartinka(r"images\image2.png")
-
-print("--------------------------------")
+ask_question([
+    "The symbol of Halloween is: (Символ Хэллоуина – это)",
+    "1: Pumpkin",
+    "2: Squash",
+    "3: Watermelon",
+    "4: Os"
+], "1", r"images\image4.png")
 
 # Вопрос 4
-print("Which animal is most often used on Easter cards? (Какое животное чаще всего изображено на Пасхальных открытках?)")
-print("1: Rabbit")
-print("2: Fox")
-print("3: Wolf")
-print("4: Sheep")
-otvet = input("Введите ответ: ")
-if otvet == "1":
-    print("Правильно!")
-    score = score + 1
-    kartinka(r"images\image5.png")
-else:
-    print("Неправильно!")
-    kartinka(r"images\image2.png")
-
-print("--------------------------------")
+ask_question([
+    "Which animal is most often used on Easter cards? (Какое животное чаще всего изображено на Пасхальных открытках?)",
+    "1: Rabbit",
+    "2: Fox",
+    "3: Wolf",
+    "4: Sheep"
+], "1", r"images\image5.png")
 
 # Вопрос 5
-print("Which plant is associated with St. Patrick's Day? (Какое растение ассоциируется с Днем Святого Патрика?)")
-print("1: Sunflower")
-print("2: Fern")
-print("3: Shamrock")
-print("4: Spruce")
-otvet = input("Введите ответ: ")
-if otvet == "3":
-    print("Правильно!")
-    score = score + 1
-    kartinka(r"images\image6.png")
-else:
-    print("Неправильно!")
-    kartinka(r"images\image2.png")
-
-print("--------------------------------")
+ask_question([
+    "Which plant is associated with St. Patrick's Day? (Какое растение ассоциируется с Днем Святого Патрика?)",
+    "1: Sunflower",
+    "2: Fern",
+    "3: Shamrock",
+    "4: Spruce"
+], "3", r"images\image6.png")
 
 # Вопрос 6
-print("One … a day, keeps doctors away!")
-print("1: apple")
-print("2: pear")
-print("3: lemon")
-print("4: ice cream")
-otvet = input("Введите ответ: ")
-if otvet == "1":
-    print("Правильно!")
-    score = score + 1
-    kartinka(r"images\image7.png")
-else:
-    print("Неправильно!")
-    kartinka(r"images\image2.png")
-
-print("--------------------------------")
+ask_question([
+    "One … a day, keeps doctors away!",
+    "1: apple",
+    "2: pear",
+    "3: lemon",
+    "4: ice cream"
+], "1", r"images\image7.png")
 
 # Вопрос 7
-print("Measure thrice and cut …")
-print("1: once")
-print("2: twice")
-print("3: first")
-print("4: last")
-otvet = input("Введите ответ: ")
-if otvet == "1":
-    print("Правильно!")
-    score = score + 1
-    kartinka(r"images\image7.png")
-else:
-    print("Неправильно!")
-    kartinka(r"images\image2.png")
-
-print("--------------------------------")
+ask_question([
+    "Measure thrice and cut …",
+    "1: once",
+    "2: twice",
+    "3: first",
+    "4: last"
+], "1", r"images\image7.png")
 
 # Вопрос 8
-print("Don’t judge a book by its ...")
-print("1: Pictures")
-print("2: Pages Cover")
-print("3: Author")
-otvet = input("Введите ответ: ")
-if otvet == "3":
-    print("Правильно!")
-    score = score + 1
-    kartinka(r"images\image7.png")
-else:
-    print("Неправильно!")
-    kartinka(r"images\image2.png")
-
-print("--------------------------------")
+ask_question([
+    "Don’t judge a book by its ...",
+    "1: Pictures",
+    "2: Pages Cover",
+    "3: Author"
+], "3", r"images\image7.png")
 
 # Вопрос 9
-print("A bird may be known by its …")
-print("1: feathers")
-print("2: break")
-print("3: flight")
-print("4: songs")
-otvet = input("Введите ответ: ")
-if otvet == "1":
-    print("Правильно!")
-    score = score + 1
-    kartinka(r"images\image7.png")
-else:
-    print("Неправильно!")
-    kartinka(r"images\image2.png")
-
-print("--------------------------------")
+ask_question([
+    "A bird may be known by its …",
+    "1: feathers",
+    "2: break",
+    "3: flight",
+    "4: songs"
+], "1", r"images\image7.png")
 
 # Вопрос 10
-print("Which phrase is a good luck wish?")
-print("1: Break a leg!")
-print("2: Not a fluff or a feather!")
-print("3: Best of luck!")
-print("4: Blow them away!")
-otvet = input("Введите ответ: ")
-if otvet in ["1", "2", "3", "4"]:
-    print("Правильно!")
-    score = score + 1
-    kartinka(r"images\image7.png")
-else:
-    print("Неправильно!")
-    kartinka(r"images\image2.png")
-
-print("--------------------------------")
+ask_question([
+    "Which phrase is a good luck wish?",
+    "1: Break a leg!",
+    "2: Not a fluff or a feather!",
+    "3: Best of luck!",
+    "4: Blow them away!"
+], ["1", "2", "3", "4"], r"images\image7.png")
 
 # Вопрос 11
-print("What is the name of the tradition of afternoon tea drinking in England? (Как называется традиция послеобеденного чаепития в Англии?)")
-print("1: 6 p.m")
-print("2: 5 o'clock")
-print("3: evening tea")
-print("4: lunch")
-otvet = input("Введите ответ: ")
-if otvet == "2":
-    print("Правильно!")
-    score = score + 1
-    kartinka(r"images\image8.png")
-else:
-    print("Неправильно!")
-    kartinka(r"images\image2.png")
-
-print("--------------------------------")
+ask_question([
+    "What is the name of the tradition of afternoon tea drinking in England? (Как называется традиция послеобеденного чаепития в Англии?)",
+    "1: 6 p.m",
+    "2: 5 o'clock",
+    "3: evening tea",
+    "4: lunch"
+], "2", r"images\image8.png")
 
 # Вопрос 12
-print("Santa  delivers gifts through the: (Санта-Клаус доставляет подарки через:)")
-print("1: backdoor")
-print("2: window")
-print("3: door")
-print("4: chimney")
-otvet = input("Введите ответ: ")
-if otvet == "4":
-    print("Правильно!")
-    score = score + 1
-    kartinka(r"images\image9.png")
-else:
-    print("Неправильно!")
-    kartinka(r"images\image2.png")
-
-print("--------------------------------")
+ask_question([
+    "Santa  delivers gifts through the: (Санта-Клаус доставляет подарки через:)",
+    "1: backdoor",
+    "2: window",
+    "3: door",
+    "4: chimney"
+], "4", r"images\image9.png")
 
 # Вопрос 13
-print("At Easter, parents hide, and children look for: (На Пасху родители прячутся, а дети ищут:)")
-print("1: eggs")
-print("2: cakes")
-print("3: gifts")
-print("4: candies")
-otvet = input("Введите ответ: ")
-if otvet == "1":
-    print("Правильно!")
-    score = score + 1
-    kartinka(r"images\image10.png")
-else:
-    print("Неправильно!")
-    kartinka(r"images\image2.png")
-
-print("--------------------------------")
+ask_question([
+    "At Easter, parents hide, and children look for: (На Пасху родители прячутся, а дети ищут:)",
+    "1: eggs",
+    "2: cakes",
+    "3: gifts",
+    "4: candies"
+], "1", r"images\image10.png")
 
 # Вопрос 14
-print("Halloween is one of the favorite holidays...")
-print("1: Happy Halloween")
-print("2: Not a fluff or a feather")
-print("3: Trick or treat!")
-print("4: Good luck!")
-otvet = input("Введите ответ: ")
-if otvet == "3":
-    print("Правильно!")
-    score = score + 1
-    kartinka(r"images\image11.png")
-else:
-    print("Неправильно!")
-    kartinka(r"images\image2.png")
-
-print("--------------------------------")
+ask_question([
+    "Halloween is one of the favorite holidays...",
+    "1: Happy Halloween",
+    "2: Not a fluff or a feather",
+    "3: Trick or treat!",
+    "4: Good luck!"
+], "3", r"images\image11.png")
 
 # Вопрос 15
-print("In Ireland, it is customary to wear green clothes on St. Patrick's Day or attach a ** to one's clothing.")
-print("1: Rose")
-print("2: Shamrock")
-print("3: Lily")
-print("4: Fern")
-otvet = input("Введите ответ: ")
-if otvet == "2":
-    print("Правильно!")
-    score = score + 1
-    kartinka(r"images\image6.png")
-else:
-    print("Неправильно!")
-    kartinka(r"images\image2.png")
+ask_question([
+    "In Ireland, it is customary to wear green clothes on St. Patrick's Day or attach a ** to one's clothing.",
+    "1: Rose",
+    "2: Shamrock",
+    "3: Lily",
+    "4: Fern"
+], "2", r"images\image6.png")
 
 print("================================")
 print("Твой счет: " + str(score))

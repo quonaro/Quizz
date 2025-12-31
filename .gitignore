@@ -1,5 +1,5 @@
 dist/
 build/
 venv/
-main.spec
+*.spec
 nuitka-crash-report.xml

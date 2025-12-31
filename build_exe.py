@@ -14,10 +14,9 @@ def build():
     cmd = [
         sys.executable, "-m", "PyInstaller",
         "--onefile",
-        "--name", "main",
+        "--name", "Квиз",
         "--add-data", f"images{os.pathsep}images",
         "--add-data", f"questions-auto.json{os.pathsep}.",
-        "--add-data", f"instruction.pdf{os.pathsep}.",
         "--add-data", f"lib{os.pathsep}lib",
         "main.py"
     ]
