@@ -8,8 +8,32 @@ on:
       - 'v*'
 
 jobs:
+  convert-pdf:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install Pandoc and LaTeX
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y pandoc texlive-xetex texlive-fonts-recommended texlive-lang-cyrillic
+    
+    - name: Convert Markdown to PDF
+      run: |
+        pandoc instruction.md -o instruction.pdf --pdf-engine=xelatex -V geometry:margin=1in
+    
+    - name: Upload PDF artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: instruction-pdf
+        path: instruction.pdf
+        retention-days: 1
+
   build-and-release:
     runs-on: windows-latest
+    needs: convert-pdf
     
     steps:
     - name: Checkout code
@@ -29,24 +53,10 @@ jobs:
       run: |
         python build_exe.py
     
-    - name: Install Pandoc for PDF conversion
-      run: |
-        choco install pandoc -y
-        choco install miktex -y
-    
-    - name: Initialize MiKTeX and Convert to PDF
-      shell: pwsh
-      run: |
-        # Add MiKTeX to PATH
-        $env:Path = "C:\Program Files\MiKTeX\miktex\bin\x64;" + $env:Path
-        
-        # Initialize MiKTeX user configuration
-        initexmf --set-config-value=[MPM]AutoInstall=1
-        initexmf --update-fndb
-        
-        # Convert using xelatex (supports Unicode/Cyrillic)
-        pandoc instruction.md -o instruction.pdf --pdf-engine=xelatex -V geometry:margin=1in -V mainfont="DejaVu Sans"
-      continue-on-error: false
+    - name: Download PDF artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: instruction-pdf
     
     - name: Create release archive
       run: |
