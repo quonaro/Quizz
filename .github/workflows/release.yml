@@ -66,6 +66,7 @@ jobs:
       run: |
         mkdir release
         Copy-Item dist\Quiz.exe release\
+        Copy-Item main.py release\
         Copy-Item instruction.pdf release\
         Compress-Archive -Path release\* -DestinationPath Quiz-Release.zip
     
@@ -102,6 +103,7 @@ jobs:
           
           Содержимое архива:
           - Quiz.exe - исполняемый файл для Windows (все ресурсы встроены)
+          - main.py - исходный код программы
           - instruction.pdf - инструкция по использованию
           
           Для запуска распакуйте архив и запустите Quiz.exe
