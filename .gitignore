@@ -5,3 +5,6 @@ venv/
 nuitka-crash-report.xml
 release/
 Quiz-Release.zip
+__pycache__/
+*.py[cod]
+*$py.class
