@@ -90,8 +90,9 @@
         "question": "Don’t judge a book by its ...",
         "answers": {
             "1": "Pictures",
-            "2": "Pages Cover",
-            "3": "Author"
+            "2": "Pages",
+            "3": "Cover",
+            "4": "Author"
         },
         "correct_answer": "3",
         "image": "images/image7.png",
