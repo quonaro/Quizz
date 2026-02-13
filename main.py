@@ -216,9 +216,9 @@ ask_question(
     [
         "The symbol of Halloween is: (Символ Хэллоуина – это)",
         "1: Pumpkin",
-        "2: Squash",
+        "2: Zucchini",
         "3: Watermelon",
-        "4: Os",
+        "4: Orange",
     ],
     "1",
     r"images\image4.png",
@@ -260,7 +260,7 @@ ask_question(
         "4: ice cream",
     ],
     "1",
-    r"images\image7.png",
+    r"images\image12.png",
 )
 
 # Вопрос 7
